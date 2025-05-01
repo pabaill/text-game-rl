@@ -1,13 +1,16 @@
 from jericho import *
+
 # Create the environment, optionally specifying a random seed
 env = FrotzEnv("../jericho/z-machine-games-master/jericho-game-suite/zork1.z5")
 initial_observation, info = env.reset()
-done = False
-while not done:
+walkthrough = env.get_walkthrough()
+for act in walkthrough:
     # Take an action in the environment using the step fuction.
     # The resulting text-observation, reward, and game-over indicator is returned.
-    move = input("Input: ")
-    observation, reward, done, info = env.step(move)
+    # move = input("Input: ")
+    move = input("Press ENTER to advance")
+    observation, reward, done, info = env.step(act)
+    print(f"Action: {act}")
     print(observation)
     print(f"Reward: {reward}")
     print(f"Next valid actions: {env.get_valid_actions()}")
