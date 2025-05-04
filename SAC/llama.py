@@ -2,7 +2,7 @@ from transformers import AutoModel, AutoTokenizer
 import torch
 
 class LLaMAWrapper:
-    def __init__(self, model_name="meta-llama/Llama-2-7b-hf"):
+    def __init__(self, model_name="meta-llama/Llama-3.2-3B-Instruct"):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name)
 
