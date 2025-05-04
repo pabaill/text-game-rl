@@ -9,7 +9,7 @@ from torch import nn
 import wandb
 
 
-def train(game_path, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096):
+def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096):
     wandb.init(project="text-adventure-rl", entity="pabaill")  # Replace with your W&B username and project name
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -19,6 +19,7 @@ def train(game_path, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9
         "gamma": gamma,
         "action_dim": action_dim,
         "state_dim": state_dim,
+        "reward_shape_lambda": _lambda
     })
     env = TextAdventureEnv(game_path)
     llama = LLaMAWrapper()
@@ -50,10 +51,19 @@ def train(game_path, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9
 
             next_state_text, reward, done, _ = env.step(action_text)
             next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
+            
+            # Compute state value functions
+            v_current = critic(state_embedding, action_embedding).mean()
+            a_next = actor(next_state_embedding)
+            v_next = critic(next_state_embedding, a_next).mean()
 
-            replay_buffer.add((state_embedding.detach(), action_embedding.detach(), reward, next_state_embedding.detach(), done))
+            # Shape the reward
+            shaped_reward = reward + _lambda * (v_current - v_next)
 
-            episode_reward += reward
+            # Add the shaped reward to the replay buffer
+            replay_buffer.add((state_embedding.detach(), action_embedding.detach(), shaped_reward.detach(), next_state_embedding.detach(), done))
+
+            episode_reward += shaped_reward.item()
 
             # Training
             if len(replay_buffer.buffer) > batch_size:
