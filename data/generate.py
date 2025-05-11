@@ -1,6 +1,12 @@
-import csv
 from jericho import *
 from tqdm import tqdm
+import csv
+import sys
+import os
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
+
+from SAC.llama import LLaMAWrapper
 
 def save_to_csv(data, filename="training_data.csv"):
     # Open the CSV file for writing
@@ -15,13 +21,18 @@ def save_to_csv(data, filename="training_data.csv"):
             writer.writerow([state, action, reward, next_state, done])
 
 def generate_dataset(gamename):
+    llama = LLaMAWrapper()
     env = FrotzEnv(f"../jericho/z-machine-games-master/jericho-game-suite/{gamename}.z5")
     prev_observation, info = env.reset()
+    prev_observation = llama.encode_text(prev_observation)
     walkthrough = env.get_walkthrough()
     data = []
     for action in tqdm(walkthrough, unit="action"):
         # Take an action in the environment
         observation, reward, done, info = env.step(action)
+
+        observation = llama.encode_text(observation).squeeze(0)
+        action = llama.encode_text(action).squeeze(0)
         
         # Capture the current state, action, reward, next state, and done flag
         data.append((prev_observation, action, reward, observation, done))
