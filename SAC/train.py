@@ -57,13 +57,16 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             a_next = actor(next_state_embedding)
             v_next = critic(next_state_embedding, a_next).mean()
 
-            # Shape the reward
-            shaped_reward = reward + _lambda * (v_current - v_next)
+            # Shape the reward using the critic as a potential function with discount gamma
+            v_current_detach = v_current.detach()
+            v_next_detach = v_next.detach()
+            shaped_reward = reward + _lambda * (gamma * v_next_detach - v_current_detach)
 
             # Add the shaped reward to the replay buffer
             replay_buffer.add((state_embedding.detach(), action_embedding.detach(), shaped_reward.detach(), next_state_embedding.detach(), done))
 
             episode_reward += shaped_reward.item()
+            episode_raw_reward += reward
 
             # Training
             if len(replay_buffer.buffer) > batch_size:
@@ -100,6 +103,7 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             "loss_actor": episode_loss_actor,
             "loss_critic": episode_loss_critic,
             "reward": episode_reward,  # You can log average reward per episode or any other metrics
+            "raw_reward": episode_raw_reward
         })
         if episode % 100 == 0:
             # Save the model after training
