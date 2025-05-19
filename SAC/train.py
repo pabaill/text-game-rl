@@ -2,6 +2,9 @@ from env import TextAdventureEnv
 from llama import LLaMAWrapper
 from ac import Actor, Critic
 from replay import ReplayBuffer
+from shaper import RewardShaper
+
+import argparse
 from copy import deepcopy
 import torch
 from torch import nn
@@ -25,12 +28,14 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
     llama = LLaMAWrapper()
     actor = Actor(state_dim=state_dim, action_dim=action_dim)
     critic = Critic(state_dim=state_dim, action_dim=action_dim)
+    reward_shaper = RewardShaper(state_dim)
     target_critic = deepcopy(critic)
 
     replay_buffer = ReplayBuffer()
 
     optimizer_actor = torch.optim.Adam(actor.parameters(), lr=lra)
     optimizer_critic = torch.optim.Adam(critic.parameters(), lr=lrc)
+    optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
 
     # Pre-encode all actions in the action bank
     action_texts = env.valid_actions
@@ -57,13 +62,16 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             a_next = actor(next_state_embedding)
             v_next = critic(next_state_embedding, a_next).mean()
 
-            # Shape the reward
-            shaped_reward = reward + _lambda * (v_current - v_next)
+            # Shape the reward using the critic as a potential function with discount gamma
+            v_current_detach = v_current.detach()
+            v_next_detach = v_next.detach()
+            shaped_reward = reward + _lambda * (gamma * v_next_detach - v_current_detach)
 
             # Add the shaped reward to the replay buffer
             replay_buffer.add((state_embedding.detach(), action_embedding.detach(), shaped_reward.detach(), next_state_embedding.detach(), done))
 
             episode_reward += shaped_reward.item()
+            episode_raw_reward += reward
 
             # Training
             if len(replay_buffer.buffer) > batch_size:
@@ -71,15 +79,23 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
                 s, a, r, s_next, d = zip(*batch)
                 s, a, r, s_next, d = map(torch.stack, (s, a, torch.tensor(r).unsqueeze(1), s_next, torch.tensor(d).unsqueeze(1).float()))
 
+                reward_delta = reward_shaper(s, s_next)
+                shaped_r = r + reward_delta.detach()
+
                 with torch.no_grad():
                     a_next = actor(s_next)
-                    q_target = r + gamma * (1 - d) * target_critic(s_next, a_next)
+                    q_target = shaped_r + gamma * (1 - d) * target_critic(s_next, a_next)
 
                 q_current = critic(s, a)
                 critic_loss = nn.MSELoss()(q_current, q_target)
                 optimizer_critic.zero_grad()
                 critic_loss.backward()
                 optimizer_critic.step()
+
+                critic_loss_shaper = nn.MSELoss()(q_current, q_target)
+                optimizer_shaper.zero_grad()
+                critic_loss_shaper.backward()
+                optimizer_shaper.step()
 
                 a_pred = actor(s)
                 actor_loss = -critic(s, a_pred).mean()
@@ -100,6 +116,7 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             "loss_actor": episode_loss_actor,
             "loss_critic": episode_loss_critic,
             "reward": episode_reward,  # You can log average reward per episode or any other metrics
+            "raw_reward": episode_raw_reward
         })
         if episode % 100 == 0:
             # Save the model after training
@@ -109,6 +126,28 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             wandb.save(f"critic_model_ckpt_{episode}.pth")
 
 if __name__ == '__main__':
-    game = input('Choose game: ')
-    game_path = f"../jericho/z-machine-games-master/jericho-game-suite/{game}.z5"
-    train(game_path)
+    parser = argparse.ArgumentParser(description="Train RL agent in text adventure game.")
+    parser.add_argument('--game', type=str, required=True, help='Name of the game file (without extension)')
+    parser.add_argument('--lambda_', type=float, default=0.1, help='Reward shaping lambda')
+    parser.add_argument('--lra', type=float, default=1e-4, help='Learning rate for actor')
+    parser.add_argument('--lrc', type=float, default=1e-4, help='Learning rate for critic')
+    parser.add_argument('--batch_size', type=int, default=32, help='Training batch size')
+    parser.add_argument('--episodes', type=int, default=1000, help='Number of training episodes')
+    parser.add_argument('--gamma', type=float, default=0.9, help='Discount factor')
+    parser.add_argument('--action_dim', type=int, default=512, help='Action embedding dimension')
+    parser.add_argument('--state_dim', type=int, default=4096, help='State embedding dimension')
+
+    args = parser.parse_args()
+    game_path = f"../jericho/z-machine-games-master/jericho-game-suite/{args.game}.z5"
+
+    train(
+        game_path=game_path,
+        _lambda=args.lambda_,
+        lra=args.lra,
+        lrc=args.lrc,
+        batch_size=args.batch_size,
+        episodes=args.episodes,
+        gamma=args.gamma,
+        action_dim=args.action_dim,
+        state_dim=args.state_dim
+    )
