@@ -4,6 +4,7 @@ from ac import Actor, Critic
 from replay import ReplayBuffer
 from shaper import RewardShaper
 
+import argparse
 from copy import deepcopy
 import torch
 from torch import nn
@@ -125,6 +126,28 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             wandb.save(f"critic_model_ckpt_{episode}.pth")
 
 if __name__ == '__main__':
-    game = input('Choose game: ')
-    game_path = f"../jericho/z-machine-games-master/jericho-game-suite/{game}.z5"
-    train(game_path)
+    parser = argparse.ArgumentParser(description="Train RL agent in text adventure game.")
+    parser.add_argument('--game', type=str, required=True, help='Name of the game file (without extension)')
+    parser.add_argument('--lambda_', type=float, default=0.1, help='Reward shaping lambda')
+    parser.add_argument('--lra', type=float, default=1e-4, help='Learning rate for actor')
+    parser.add_argument('--lrc', type=float, default=1e-4, help='Learning rate for critic')
+    parser.add_argument('--batch_size', type=int, default=32, help='Training batch size')
+    parser.add_argument('--episodes', type=int, default=1000, help='Number of training episodes')
+    parser.add_argument('--gamma', type=float, default=0.9, help='Discount factor')
+    parser.add_argument('--action_dim', type=int, default=512, help='Action embedding dimension')
+    parser.add_argument('--state_dim', type=int, default=4096, help='State embedding dimension')
+
+    args = parser.parse_args()
+    game_path = f"../jericho/z-machine-games-master/jericho-game-suite/{args.game}.z5"
+
+    train(
+        game_path=game_path,
+        _lambda=args.lambda_,
+        lra=args.lra,
+        lrc=args.lrc,
+        batch_size=args.batch_size,
+        episodes=args.episodes,
+        gamma=args.gamma,
+        action_dim=args.action_dim,
+        state_dim=args.state_dim
+    )
