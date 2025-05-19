@@ -12,7 +12,7 @@ from torch import nn
 import wandb
 
 
-def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096):
+def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096, learn_reward_shaping=False):
     wandb.init(project="text-adventure-rl", entity="pabaill")  # Replace with your W&B username and project name
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -57,15 +57,20 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             next_state_text, reward, done, _ = env.step(action_text)
             next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
             
-            # Compute state value functions
-            v_current = critic(state_embedding, action_embedding).mean()
-            a_next = actor(next_state_embedding)
-            v_next = critic(next_state_embedding, a_next).mean()
+            if learn_reward_shaping:
+                # Use net to learn reward shaping method
+                potential_diff = reward_shaper(state_embedding, next_state_embedding).squeeze() # Assuming shaper outputs a scalar
+                shaped_reward = reward + _lambda * potential_diff
+            else:
+                # Compute state value functions
+                v_current = critic(state_embedding, action_embedding).mean()
+                a_next = actor(next_state_embedding)
+                v_next = critic(next_state_embedding, a_next).mean()
 
-            # Shape the reward using the critic as a potential function with discount gamma
-            v_current_detach = v_current.detach()
-            v_next_detach = v_next.detach()
-            shaped_reward = reward + _lambda * (gamma * v_next_detach - v_current_detach)
+                # Shape the reward using the critic as a potential function with discount gamma
+                v_current_detach = v_current.detach()
+                v_next_detach = v_next.detach()
+                shaped_reward = reward + _lambda * (gamma * v_next_detach - v_current_detach)
 
             # Add the shaped reward to the replay buffer
             replay_buffer.add((state_embedding.detach(), action_embedding.detach(), shaped_reward.detach(), next_state_embedding.detach(), done))
@@ -79,8 +84,16 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
                 s, a, r, s_next, d = zip(*batch)
                 s, a, r, s_next, d = map(torch.stack, (s, a, torch.tensor(r).unsqueeze(1), s_next, torch.tensor(d).unsqueeze(1).float()))
 
-                reward_delta = reward_shaper(s, s_next)
-                shaped_r = r + reward_delta.detach()
+                # Either use learned reward shaping phi OR estimate with V
+                if learn_reward_shaping:
+                    reward_delta = reward_shaper(s, s_next)
+                    shaped_r = r + _lambda * reward_delta.detach()
+                else:
+                    with torch.no_grad():
+                        v_current_batch = critic(s, a).mean(dim=1, keepdim=True)
+                        a_next_batch = actor(s_next)
+                        v_next_batch = critic(s_next, a_next_batch).mean(dim=1, keepdim=True)
+                        shaped_r = r + _lambda * (gamma * v_next_batch - v_current_batch)
 
                 with torch.no_grad():
                     a_next = actor(s_next)
@@ -92,10 +105,13 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
                 critic_loss.backward()
                 optimizer_critic.step()
 
-                critic_loss_shaper = nn.MSELoss()(q_current, q_target)
-                optimizer_shaper.zero_grad()
-                critic_loss_shaper.backward()
-                optimizer_shaper.step()
+                if learn_reward_shaping:
+                    # Define a target for the reward shaper (TD error)
+                    td_error = (r + gamma * (1 - d) * critic(s_next, actor(s_next)).detach() - critic(s, a).detach()).squeeze()
+                    shaper_loss = nn.MSELoss()(reward_delta.squeeze(), td_error)
+                    optimizer_shaper.zero_grad()
+                    shaper_loss.backward()
+                    optimizer_shaper.step()
 
                 a_pred = actor(s)
                 actor_loss = -critic(s, a_pred).mean()
@@ -115,15 +131,17 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             "episode": episode,
             "loss_actor": episode_loss_actor,
             "loss_critic": episode_loss_critic,
-            "reward": episode_reward,  # You can log average reward per episode or any other metrics
+            "reward": episode_reward,
             "raw_reward": episode_raw_reward
         })
         if episode % 100 == 0:
             # Save the model after training
             torch.save(actor.state_dict(), f"actor_model_ckpt_{episode}.pth")
             torch.save(critic.state_dict(), f"critic_model_ckpt_{episode}.pth")
+            torch.save(reward_shaper.state_dict(), f"reward_shaper_ckpt_{episode}.pth")
             wandb.save(f"actor_model_ckpt_{episode}.pth")
             wandb.save(f"critic_model_ckpt_{episode}.pth")
+            wandb.save(f"reward_shaper_ckpt_{episode}.pth")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train RL agent in text adventure game.")
@@ -136,6 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.9, help='Discount factor')
     parser.add_argument('--action_dim', type=int, default=512, help='Action embedding dimension')
     parser.add_argument('--state_dim', type=int, default=4096, help='State embedding dimension')
+    parser.add_argument('--learn_reward_shaping', type=bool, default=False, help='Optional learned net for reward shaping')
 
     args = parser.parse_args()
     game_path = f"../jericho/z-machine-games-master/jericho-game-suite/{args.game}.z5"
@@ -149,5 +168,6 @@ if __name__ == '__main__':
         episodes=args.episodes,
         gamma=args.gamma,
         action_dim=args.action_dim,
-        state_dim=args.state_dim
+        state_dim=args.state_dim,
+        learn_reward_shaping=args.learn_reward_shaping
     )
