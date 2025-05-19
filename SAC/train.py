@@ -2,6 +2,8 @@ from env import TextAdventureEnv
 from llama import LLaMAWrapper
 from ac import Actor, Critic
 from replay import ReplayBuffer
+from shaper import RewardShaper
+
 from copy import deepcopy
 import torch
 from torch import nn
@@ -25,12 +27,14 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
     llama = LLaMAWrapper()
     actor = Actor(state_dim=state_dim, action_dim=action_dim)
     critic = Critic(state_dim=state_dim, action_dim=action_dim)
+    reward_shaper = RewardShaper(state_dim)
     target_critic = deepcopy(critic)
 
     replay_buffer = ReplayBuffer()
 
     optimizer_actor = torch.optim.Adam(actor.parameters(), lr=lra)
     optimizer_critic = torch.optim.Adam(critic.parameters(), lr=lrc)
+    optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
 
     # Pre-encode all actions in the action bank
     action_texts = env.valid_actions
@@ -74,15 +78,23 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
                 s, a, r, s_next, d = zip(*batch)
                 s, a, r, s_next, d = map(torch.stack, (s, a, torch.tensor(r).unsqueeze(1), s_next, torch.tensor(d).unsqueeze(1).float()))
 
+                reward_delta = reward_shaper(s, s_next)
+                shaped_r = r + reward_delta.detach()
+
                 with torch.no_grad():
                     a_next = actor(s_next)
-                    q_target = r + gamma * (1 - d) * target_critic(s_next, a_next)
+                    q_target = shaped_r + gamma * (1 - d) * target_critic(s_next, a_next)
 
                 q_current = critic(s, a)
                 critic_loss = nn.MSELoss()(q_current, q_target)
                 optimizer_critic.zero_grad()
                 critic_loss.backward()
                 optimizer_critic.step()
+
+                critic_loss_shaper = nn.MSELoss()(q_current, q_target)
+                optimizer_shaper.zero_grad()
+                critic_loss_shaper.backward()
+                optimizer_shaper.step()
 
                 a_pred = actor(s)
                 actor_loss = -critic(s, a_pred).mean()
