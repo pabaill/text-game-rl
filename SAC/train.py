@@ -236,7 +236,7 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
                 "eval_loss_actor": eval_loss_actor,
                 "eval_loss_critic": eval_loss_critic
             })
-            avg_sim = test_action_generation(actor, llama, data, batch_size=batch_size, output_file=f"ckpt_{episode}_results.csv")
+            avg_sim = test_action_generation(actor, llama, data, batch_size=batch_size, output_file=f"checkpoints/ckpt_{episode}_results.csv")
             wandb.log({
                 "episode": episode,
                 "average_similarity": avg_sim
