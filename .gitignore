@@ -1,2 +1,6 @@
 /jericho
 wandb
+data/train
+data/eval
+data/test
+data/splits.txt
