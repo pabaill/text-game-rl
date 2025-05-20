@@ -1,18 +1,114 @@
-from env import TextAdventureEnv
-from llama import LLaMAWrapper
-from ac import Actor, Critic
-from replay import ReplayBuffer
-from shaper import RewardShaper
-
-import argparse
-from copy import deepcopy
+import pandas as pd
 import torch
 from torch import nn
-
+from torch.nn.functional import cosine_similarity
+from replay import ReplayBuffer
+from shaper import RewardShaper
+from llama import LLaMAWrapper
+from ac import Actor, Critic
+from copy import deepcopy
 import wandb
+import argparse
 
+def test_action_generation(actor, llama, test_data, batch_size=32, output_file="test_results.csv"):
+    """
+    Test the generation of actions during a playthrough and save the results to a CSV file.
+    """
 
-def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096, learn_reward_shaping=False):
+    actor.eval()
+
+    results = []
+
+    batch_data = test_data.sample(batch_size)
+
+    for index, row in batch_data.iterrows():
+        prev_state_text = row['state']
+        expected_action_text = row['action']  # This is the ground truth action
+
+        # Convert state and action to embeddings
+        prev_state_embedding = llama.encode_text(prev_state_text).squeeze(0)
+        expected_action_embedding = llama.encode_text(expected_action_text).squeeze(0)
+
+        # Get the action predicted by the agent
+        predicted_action_embedding = actor(prev_state_embedding)
+        
+        # Decode the predicted action from the embedding
+        predicted_action_text = llama.decode_text(predicted_action_embedding)
+
+        similarity = cosine_similarity(predicted_action_embedding.unsqueeze(0), expected_action_embedding.unsqueeze(0)).item()
+
+        # Append the results to the list
+        results.append({
+            "state": prev_state_text,
+            "expected_action": expected_action_text,
+            "predicted_action": predicted_action_text,
+            "similarity": similarity
+        })
+
+    # Create a DataFrame from the results list
+    results_df = pd.DataFrame(results)
+
+    # Save the results to a CSV file
+    results_df.to_csv(output_file, index=False)
+
+    # Calculate and return the accuracy
+    avg_similarity = results_df['cosine_similarity'].mean()
+    print(f"Batch average cosine similarity: {avg_similarity:.4f}")
+
+    return avg_similarity
+
+def evaluate(actor, critic, llama, data, batch_size=32, gamma=0.9, _lambda=0.1):
+    actor.eval()  # Set to evaluation mode
+    critic.eval()
+    
+    total_reward = 0
+    total_loss_actor = 0
+    total_loss_critic = 0
+    
+    # Sample a batch from the validation data
+    batch_data = data.sample(batch_size)
+    
+    with torch.no_grad():
+        for index, row in batch_data.iterrows():
+            prev_state_text = row['state']
+            action_text = row['action']
+            reward = row['reward']
+            next_state_text = row['next_state']
+            done = row['done']
+
+            prev_state_embedding = llama.encode_text(prev_state_text).squeeze(0)
+            next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
+            action_embedding = llama.encode_text(action_text).squeeze(0)
+
+            # Compute the Q-values and actor losses
+            v_current = critic(prev_state_embedding, action_embedding).mean()
+            a_next = actor(next_state_embedding)
+            v_next = critic(next_state_embedding, a_next).mean()
+
+            shaped_reward = reward + _lambda * (gamma * v_next - v_current)
+
+            # Compute losses for actor and critic
+            critic_loss = nn.MSELoss()(v_current, shaped_reward)
+
+            a_pred = actor(prev_state_embedding)
+            actor_loss = -critic(prev_state_embedding, a_pred).mean()
+
+            total_loss_actor += actor_loss.item()
+            total_loss_critic += critic_loss.item()
+            total_reward += shaped_reward.item()
+    
+    # Return the average evaluation results
+    avg_reward = total_reward / batch_size
+    avg_loss_actor = total_loss_actor / batch_size
+    avg_loss_critic = total_loss_critic / batch_size
+
+    actor.train()  # Set back to training mode
+    critic.train()
+
+    return avg_reward, avg_loss_actor, avg_loss_critic
+
+def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096, learn_reward_shaping=False, eval_interval=100):
+    # Initialize WandB for logging
     wandb.init(project="text-adventure-rl", entity="pabaill")  # Replace with your W&B username and project name
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -24,7 +120,10 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
         "state_dim": state_dim,
         "reward_shape_lambda": _lambda
     })
-    env = TextAdventureEnv(game_path)
+
+    # load dataset
+    data = pd.read_csv(csv_path)
+
     llama = LLaMAWrapper()
     actor = Actor(state_dim=state_dim, action_dim=action_dim)
     critic = Critic(state_dim=state_dim, action_dim=action_dim)
@@ -38,32 +137,36 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
     optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
 
     # Pre-encode all actions in the action bank
-    action_texts = env.valid_actions
+    action_texts = data['chosen_action'].unique()  # Assuming 'chosen_action' column contains all possible actions
     action_embeddings = torch.stack([llama.encode_text(a).squeeze(0) for a in action_texts])
 
-    for episode in range(1000):
-        state_text = env.reset()
+    for episode in range(episodes):
         episode_loss_actor = 0
         episode_loss_critic = 0
         episode_reward = 0
-        done = False
+        episode_raw_reward = 0
 
-        while not done:
-            state_embedding = llama.encode_text(state_text).squeeze(0)
-            action_embedding = actor(state_embedding)
+        # Sampling a batch of data from the CSV file for training
+        batch_data = data.sample(batch_size)
+        
+        for index, row in batch_data.iterrows():
+            prev_state_text = row['state']
+            action_text = row['action']
+            reward = row['reward']
+            next_state_text = row['next_state']
+            done = row['done']
 
-            action_text = llama.decode_action(action_embedding, action_embeddings, action_texts)
-
-            next_state_text, reward, done, _ = env.step(action_text)
+            prev_state_embedding = llama.encode_text(prev_state_text).squeeze(0)
             next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
-            
+            action_embedding = llama.encode_text(action_text).squeeze(0)
+
             if learn_reward_shaping:
                 # Use net to learn reward shaping method
-                potential_diff = reward_shaper(state_embedding, next_state_embedding).squeeze() # Assuming shaper outputs a scalar
+                potential_diff = reward_shaper(prev_state_embedding, next_state_embedding).squeeze()  # Assuming shaper outputs a scalar
                 shaped_reward = reward + _lambda * potential_diff
             else:
                 # Compute state value functions
-                v_current = critic(state_embedding, action_embedding).mean()
+                v_current = critic(prev_state_embedding, action_embedding).mean()
                 a_next = actor(next_state_embedding)
                 v_next = critic(next_state_embedding, a_next).mean()
 
@@ -73,7 +176,7 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
                 shaped_reward = reward + _lambda * (gamma * v_next_detach - v_current_detach)
 
             # Add the shaped reward to the replay buffer
-            replay_buffer.add((state_embedding.detach(), action_embedding.detach(), shaped_reward.detach(), next_state_embedding.detach(), done))
+            replay_buffer.add((prev_state_embedding.detach(), action_embedding.detach(), shaped_reward.detach(), next_state_embedding.detach(), done))
 
             episode_reward += shaped_reward.item()
             episode_raw_reward += reward
@@ -124,8 +227,20 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
                 # Soft update
                 for target_param, param in zip(target_critic.parameters(), critic.parameters()):
                     target_param.data.copy_(0.995 * target_param.data + 0.005 * param.data)
-
-            state_text = next_state_text
+        
+        if episode % eval_interval == 0:
+            eval_reward, eval_loss_actor, eval_loss_critic = evaluate(actor, critic, llama, data, batch_size=batch_size, gamma=gamma, _lambda=_lambda)
+            wandb.log({
+                "episode": episode,
+                "eval_reward": eval_reward,
+                "eval_loss_actor": eval_loss_actor,
+                "eval_loss_critic": eval_loss_critic
+            })
+            avg_sim = test_action_generation(actor, llama, data, batch_size=batch_size, output_file=f"checkpoints/ckpt_{episode}_results.csv")
+            wandb.log({
+                "episode": episode,
+                "average_similarity": avg_sim
+            })
 
         wandb.log({
             "episode": episode,
@@ -134,18 +249,19 @@ def train(game_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=10
             "reward": episode_reward,
             "raw_reward": episode_raw_reward
         })
+
         if episode % 100 == 0:
             # Save the model after training
-            torch.save(actor.state_dict(), f"actor_model_ckpt_{episode}.pth")
-            torch.save(critic.state_dict(), f"critic_model_ckpt_{episode}.pth")
-            torch.save(reward_shaper.state_dict(), f"reward_shaper_ckpt_{episode}.pth")
+            torch.save(actor.state_dict(), f"checkpoints/actor_model_ckpt_{episode}.pth")
+            torch.save(critic.state_dict(), f"checkpoints/critic_model_ckpt_{episode}.pth")
+            torch.save(reward_shaper.state_dict(), f"checkpoints/reward_shaper_ckpt_{episode}.pth")
             wandb.save(f"actor_model_ckpt_{episode}.pth")
             wandb.save(f"critic_model_ckpt_{episode}.pth")
             wandb.save(f"reward_shaper_ckpt_{episode}.pth")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Train RL agent in text adventure game.")
-    parser.add_argument('--game', type=str, required=True, help='Name of the game file (without extension)')
+    parser = argparse.ArgumentParser(description="Train RL agent from CSV dataset.")
+    parser.add_argument('--csv', type=str, required=True, help='Path to the CSV file with the dataset')
     parser.add_argument('--lambda_', type=float, default=0.1, help='Reward shaping lambda')
     parser.add_argument('--lra', type=float, default=1e-4, help='Learning rate for actor')
     parser.add_argument('--lrc', type=float, default=1e-4, help='Learning rate for critic')
@@ -157,10 +273,8 @@ if __name__ == '__main__':
     parser.add_argument('--learn_reward_shaping', type=bool, default=False, help='Optional learned net for reward shaping')
 
     args = parser.parse_args()
-    game_path = f"../jericho/z-machine-games-master/jericho-game-suite/{args.game}.z5"
-
     train(
-        game_path=game_path,
+        csv_path=args.csv,
         _lambda=args.lambda_,
         lra=args.lra,
         lrc=args.lrc,

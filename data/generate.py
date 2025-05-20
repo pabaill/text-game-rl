@@ -13,7 +13,7 @@ def save_to_csv(data, filename="training_data.csv"):
     with open(filename, mode='w', newline='') as file:
         writer = csv.writer(file)
         # Write the header (column names)
-        writer.writerow(["state_embedding", "action_embedding", "reward", "next_state_embedding", "done"])
+        writer.writerow(["state", "action", "reward", "next_state", "done"])
 
         # Write the transitions to the file
         for transition in data:
