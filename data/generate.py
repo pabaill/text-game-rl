@@ -31,6 +31,8 @@ def generate_dataset(gamename, n_walkthroughs=5, p_rand=0.1):
 
     # Time out after 20 minutes
     timeout = time.time() + (60 * 20)
+    
+    data = []
 
     for i in tqdm(range(n_walkthroughs)):
         prev_observation, info = env.reset()
@@ -72,4 +74,4 @@ if __name__ == '__main__':
     for gamename in gamelist:
         if gamename not in games_to_skip and f"training_data_{gamename}_p_rand_{p_rand}.csv" not in existing_games:
             print(f"Generating data for : {gamename}")
-            generate_dataset(gamename, n_walkthroughs=1, p_rand=p_rand)
+            generate_dataset(gamename, n_walkthroughs=5, p_rand=p_rand)
