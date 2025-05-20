@@ -8,7 +8,7 @@ import os
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
-EVAL = ["ballyhoo", "gold", "jewel", "lurking", "night"]
+EVAL = ["yomomma", "gold", "jewel", "lurking", "night"]
 TEST = ["zork1", "snacktime"]
 
 def save_to_csv(data, filename="training_data.csv"):
@@ -30,7 +30,7 @@ def generate_dataset(gamename, n_walkthroughs=5, p_rand=0.1):
     for i in tqdm(range(n_walkthroughs)):
         prev_observation, info = env.reset()
         walkthrough = env.get_walkthrough()
-        for action in walkthrough:
+        for action in tqdm(walkthrough, unit="action"):
             chosen_action = action
             # Add some randomness to walkthrough data
             took_rand_action = random.random() < p_rand and len(env.get_valid_actions()) > 0
@@ -49,8 +49,8 @@ def generate_dataset(gamename, n_walkthroughs=5, p_rand=0.1):
                 env.set_state(prev_state)
                 observation, reward, done, info = env.step(action)
             prev_observation = observation
-            if done:
-                break
+            # if done or len(data) >= 3000:
+            #     break
         prev_observation, info = env.reset()
     folder = "train"
     if gamename[:-3] in EVAL:
@@ -62,6 +62,9 @@ def generate_dataset(gamename, n_walkthroughs=5, p_rand=0.1):
 if __name__ == '__main__':
     gamelist = os.listdir('../jericho/z-machine-games-master/jericho-game-suite')
     p_rand = float(input("p_rand: "))
+    existing_games = os.listdir('train')
+    games_to_skip = ["anchor.z8", "ballyhoo.z3"]
     for gamename in gamelist:
-        print(f"Generating data for : {gamename}")
-        generate_dataset(gamename, n_walkthroughs=10, p_rand=p_rand)
+        if gamename not in games_to_skip and f"training_data_{gamename}_p_rand_{p_rand}.csv" not in existing_games:
+            print(f"Generating data for : {gamename}")
+            generate_dataset(gamename, n_walkthroughs=1, p_rand=p_rand)

@@ -137,8 +137,8 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
     optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
 
     # Pre-encode all actions in the action bank
-    action_texts = data['chosen_action'].unique()  # Assuming 'chosen_action' column contains all possible actions
-    action_embeddings = torch.stack([llama.encode_text(a).squeeze(0) for a in action_texts])
+    # action_texts = data['chosen_action'].unique()  # Assuming 'chosen_action' column contains all possible actions
+    # action_embeddings = torch.stack([llama.encode_text(a).squeeze(0) for a in action_texts])
 
     for episode in range(episodes):
         episode_loss_actor = 0
