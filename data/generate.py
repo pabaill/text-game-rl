@@ -8,7 +8,11 @@ import os
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
+EVAL = ["ballyhoo", "gold", "jewel", "lurking", "night"]
+TEST = ["zork1", "snacktime"]
+
 def save_to_csv(data, filename="training_data.csv"):
+    print(f"Saving {len(data)} training examples to {filename}")
     # Open the CSV file for writing
     with open(filename, mode='w', newline='') as file:
         writer = csv.writer(file)
@@ -21,27 +25,43 @@ def save_to_csv(data, filename="training_data.csv"):
             writer.writerow([state, action, reward, next_state, done])
 
 def generate_dataset(gamename, n_walkthroughs=5, p_rand=0.1):
-    env = FrotzEnv(f"../jericho/z-machine-games-master/jericho-game-suite/{gamename}.z5")
+    env = FrotzEnv(f"../jericho/z-machine-games-master/jericho-game-suite/{gamename}")
     data = []
-    for i in range(n_walkthroughs):
+    for i in tqdm(range(n_walkthroughs)):
         prev_observation, info = env.reset()
         walkthrough = env.get_walkthrough()
-        for action in tqdm(walkthrough, unit="action"):
+        for action in walkthrough:
             chosen_action = action
             # Add some randomness to walkthrough data
-            if random.random() < p_rand:
+            took_rand_action = random.random() < p_rand and len(env.get_valid_actions()) > 0
+            if took_rand_action:
                 chosen_action = random.choice(env.get_valid_actions())
+                prev_state = env.get_state()
 
             # Take an action in the environment
             observation, reward, done, info = env.step(chosen_action)
             
             # Capture the current state, action, reward, next state, and done flag
             data.append((prev_observation, chosen_action, reward, observation, done))
+
+            # If we took a random action, get back on track for the walkthrough
+            if took_rand_action:
+                env.set_state(prev_state)
+                observation, reward, done, info = env.step(action)
             prev_observation = observation
             if done:
-                prev_observation, info = env.reset()
-    save_to_csv(data, filename=f"training_data_{gamename}.csv")
+                break
+        prev_observation, info = env.reset()
+    folder = "train"
+    if gamename[:-3] in EVAL:
+        folder = "eval"
+    if gamename[:-3] in TEST:
+        folder = "test"
+    save_to_csv(data, filename=f"{folder}/training_data_{gamename}_p_rand_{p_rand}.csv")
 
 if __name__ == '__main__':
-    gamename = input("Game name: ")
-    generate_dataset(gamename)
+    gamelist = os.listdir('../jericho/z-machine-games-master/jericho-game-suite')
+    p_rand = float(input("p_rand: "))
+    for gamename in gamelist:
+        print(f"Generating data for : {gamename}")
+        generate_dataset(gamename, n_walkthroughs=10, p_rand=p_rand)
