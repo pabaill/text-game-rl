@@ -26,10 +26,10 @@ def save_to_csv(data, filename="training_data.csv"):
 
 def generate_dataset(gamename, n_walkthroughs=5, p_rand=0.1):
     env = FrotzEnv(f"../jericho/z-machine-games-master/jericho-game-suite/{gamename}")
-    data = []
+
     for i in tqdm(range(n_walkthroughs)):
         prev_observation, info = env.reset()
-        walkthrough = env.get_walkthrough()
+        walkthrough = env.get_walkthrough() # returns list of action strings needed to complete the game
         for action in tqdm(walkthrough, unit="action"):
             chosen_action = action
             # Add some randomness to walkthrough data
