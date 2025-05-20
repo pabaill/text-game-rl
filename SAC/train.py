@@ -139,6 +139,7 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
     # Pre-encode all actions in the action bank
     action_texts = data['chosen_action'].unique()  # Assuming 'chosen_action' column contains all possible actions
     action_embeddings = torch.stack([llama.encode_text(a).squeeze(0) for a in action_texts])
+    # unused?
 
     for episode in range(episodes):
         episode_loss_actor = 0
@@ -158,6 +159,9 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
 
             prev_state_embedding = llama.encode_text(prev_state_text).squeeze(0)
             next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
+
+            # NOTE: why are we re-embedding and not using the pre-encoded action embeddings?
+            # could we do: action_embedding = action_embeddings[action_texts.index(action_text)]?
             action_embedding = llama.encode_text(action_text).squeeze(0)
 
             if learn_reward_shaping:
