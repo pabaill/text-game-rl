@@ -21,5 +21,5 @@ def merge_csv_files(directory, output_filename="merged_file.csv"):
     merged_df.to_csv(output_filename, index=False)
 
 if __name__ == '__main__':
-    for directory in ['train', 'test', 'eval']:
+    for directory in ['train', 'eval', 'test']:
         merge_csv_files(directory, output_filename=f"{directory}.csv")
