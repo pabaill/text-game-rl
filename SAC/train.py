@@ -42,7 +42,7 @@ def test_action_generation(actor, llama, test_data, batch_size=32, output_file="
             "state": prev_state_text,
             "expected_action": expected_action_text,
             "predicted_action": predicted_action_text,
-            "similarity": similarity
+            "cosine_similarity": similarity
         })
 
     # Create a DataFrame from the results list
