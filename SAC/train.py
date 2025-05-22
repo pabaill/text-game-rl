@@ -275,6 +275,7 @@ if __name__ == '__main__':
     parser.add_argument('--action_dim', type=int, default=512, help='Action embedding dimension')
     parser.add_argument('--state_dim', type=int, default=4096, help='State embedding dimension')
     parser.add_argument('--learn_reward_shaping', type=bool, default=False, help='Optional learned net for reward shaping')
+    parser.add_argument('--train_only', type=bool, default=False, help='No eval or test steps')
 
     args = parser.parse_args()
     train(
