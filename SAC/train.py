@@ -108,9 +108,9 @@ def evaluate(actor, critic, llama, data, batch_size=32, gamma=0.9, _lambda=0.1):
 
     return avg_reward, avg_loss_actor, avg_loss_critic
 
-def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False):
+def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, wandb_proj=None, wandb_entity=None):
     # Initialize WandB for logging
-    wandb.init(project="text-adventure-rl", entity="pabaill")  # Replace with your W&B username and project name
+    wandb.init(project=wandb_proj, entity=wandb_entity)  # Replace with your W&B username and project name
     wandb.config.update({
         "learning_rate_actor": lra,
         "learning_rate_critic": lrc,
@@ -150,6 +150,9 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
 
         # Sampling a batch of data from the CSV file for training
         batch_data = data.sample(batch_size)
+
+        # track episodes on console
+        print(f"Episode num {episode}")
         
         for index, row in batch_data.iterrows():
             prev_state_text = row['state']
@@ -258,6 +261,7 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
             "reward": episode_reward,
             "raw_reward": episode_raw_reward
         })
+        print(f"    reward = {reward}")
 
         if episode % 100 == 0:
             # Save the model after training
@@ -281,6 +285,8 @@ if __name__ == '__main__':
     parser.add_argument('--state_dim', type=int, default=3072, help='State embedding dimension')
     parser.add_argument('--learn_reward_shaping', type=bool, default=False, help='Optional learned net for reward shaping')
     parser.add_argument('--train_only', type=bool, default=False, help='No eval or test steps')
+    parser.add_argument('--wandb_proj', type=str, default=None, help='wandb project name')
+    parser.add_argument('--wandb_entity', type=str, default=None, help='wandb entity name')
 
     args = parser.parse_args()
     train(
@@ -294,5 +300,7 @@ if __name__ == '__main__':
         action_dim=args.action_dim,
         state_dim=args.state_dim,
         learn_reward_shaping=args.learn_reward_shaping,
-        train_only=args.train_only
+        train_only=args.train_only,
+        wandb_proj=args.wandb_proj,
+        wandb_entity=args.wandb_entity
     )
