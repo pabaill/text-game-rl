@@ -190,7 +190,11 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
             if len(replay_buffer.buffer) > batch_size:
                 batch = replay_buffer.sample(batch_size)
                 s, a, r, s_next, d = zip(*batch)
-                s, a, r, s_next, d = map(torch.stack, (s, a, torch.tensor(r).unsqueeze(1), s_next, torch.tensor(d).unsqueeze(1).float()))
+                s = torch.stack(s)
+                a = torch.stack(a)
+                r = torch.tensor(r).unsqueeze(1)
+                s_next = torch.stack(s_next)
+                d = torch.tensor(d).unsqueeze(1).float()
 
                 # Either use learned reward shaping phi OR estimate with V
                 if learn_reward_shaping:
