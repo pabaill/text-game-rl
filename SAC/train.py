@@ -107,7 +107,7 @@ def evaluate(actor, critic, llama, data, batch_size=32, gamma=0.9, _lambda=0.1):
 
     return avg_reward, avg_loss_actor, avg_loss_critic
 
-def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096, learn_reward_shaping=False, eval_interval=100):
+def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096, learn_reward_shaping=False, eval_interval=100, train_only=False):
     # Initialize WandB for logging
     wandb.init(project="text-adventure-rl", entity="pabaill")  # Replace with your W&B username and project name
     wandb.config.update({
@@ -232,7 +232,7 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
                 for target_param, param in zip(target_critic.parameters(), critic.parameters()):
                     target_param.data.copy_(0.995 * target_param.data + 0.005 * param.data)
         
-        if episode % eval_interval == 0:
+        if not train_only and episode % eval_interval == 0:
             eval_reward, eval_loss_actor, eval_loss_critic = evaluate(actor, critic, llama, data, batch_size=batch_size, gamma=gamma, _lambda=_lambda)
             wandb.log({
                 "episode": episode,
