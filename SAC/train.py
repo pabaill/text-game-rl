@@ -9,6 +9,7 @@ from ac import Actor, Critic
 from copy import deepcopy
 import wandb
 import argparse
+from tqdm import tqdm
 
 def test_action_generation(actor, llama, test_data, batch_size=32, output_file="test_results.csv"):
     """
@@ -107,7 +108,7 @@ def evaluate(actor, critic, llama, data, batch_size=32, gamma=0.9, _lambda=0.1):
 
     return avg_reward, avg_loss_actor, avg_loss_critic
 
-def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=512, state_dim=4096, learn_reward_shaping=False, eval_interval=100, train_only=False):
+def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False):
     # Initialize WandB for logging
     wandb.init(project="text-adventure-rl", entity="pabaill")  # Replace with your W&B username and project name
     wandb.config.update({
@@ -141,7 +142,7 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
     # action_embeddings = torch.stack([llama.encode_text(a).squeeze(0) for a in action_texts])
 
 
-    for episode in range(episodes):
+    for episode in tqdm(range(episodes), unit="episode"):
         episode_loss_actor = 0
         episode_loss_critic = 0
         episode_reward = 0
@@ -272,8 +273,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32, help='Training batch size')
     parser.add_argument('--episodes', type=int, default=1000, help='Number of training episodes')
     parser.add_argument('--gamma', type=float, default=0.9, help='Discount factor')
-    parser.add_argument('--action_dim', type=int, default=512, help='Action embedding dimension')
-    parser.add_argument('--state_dim', type=int, default=4096, help='State embedding dimension')
+    parser.add_argument('--action_dim', type=int, default=3072, help='Action embedding dimension')
+    parser.add_argument('--state_dim', type=int, default=3072, help='State embedding dimension')
     parser.add_argument('--learn_reward_shaping', type=bool, default=False, help='Optional learned net for reward shaping')
     parser.add_argument('--train_only', type=bool, default=False, help='No eval or test steps')
 
@@ -288,5 +289,6 @@ if __name__ == '__main__':
         gamma=args.gamma,
         action_dim=args.action_dim,
         state_dim=args.state_dim,
-        learn_reward_shaping=args.learn_reward_shaping
+        learn_reward_shaping=args.learn_reward_shaping,
+        train_only=args.train_only
     )
