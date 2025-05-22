@@ -1,0 +1,149 @@
+state,expected_action,predicted_action,cosine_similarity
+"Dropped.
+
+",W,put down map,0.3336494565010071
+"You are on your own feet again.
+
+",take in boat,put down map,0.5748878717422485
+"The brass lantern is now on.
+
+Attic
+This is the attic. The only exit is a stairway leading down.
+A large coil of rope is lying in the corner.
+On a table is a nasty-looking knife.
+
+",Get rope,put down map,0.4449318051338196
+"
+Sitting Room
+Your pet is here, staring at the box of light, holding on tight to the magic wand.",show can to pet,put down map,0.538028359413147
+"Living Room
+There is a screwdriver here.
+There is a clove of garlic here.
+Your collection of treasures consists of:
+    A jewel-encrusted egg
+    A chalice
+    A painting
+    A beautiful jeweled scarab
+    A large emerald
+    A pot of gold
+    A sceptre
+    A crystal trident
+    A leather bag of coins
+    A platinum bar
+    A crystal skull
+    A gold coffin
+
+",Put canary in case,put down map,0.5147420167922974
+"The door reluctantly opens to reveal a rickety staircase descending into darkness.
+
+",down,put down map,0.47984954714775085
+"You pause for a second. Your stomach growls.
+
+From the other room, you hear your pet banging around and yelling about the dino. Your pet must have almost tripped on it. He's always almost tripping on little stuff like that.
+
+Your pet walks in. He starts to sit down on the long soft thing but stops when he sees what's in the box of light. That lady cooking is doing her job! You pet stands and watches, transfixed. He must be thinking of food!",take off box,put down map,0.5879696011543274
+"The cyclops, hearing the name of his father's deadly nemesis, flees the room by knocking down the wall on the east of the room.
+
+",E,put down map,0.37579208612442017
+You snatch up the shiny can with your mouth and hold on tight.,examine soft,put down map,0.5344588756561279
+"
+Food Room
+Your pet is here, working on making a snack.
+
+You can also see a square soft thing here.
+
+One by one, your pet starts pulling the sandwich fixings out of the cold box and turning them into a sandwich.",drop dino,put down map,0.49989739060401917
+"Sitting Room (on the long soft thing)
+This is the room where you sit a lot. Well, you sleep here sometimes too. But there is a different room that is just for sleeping, and it is to the north. There's another room to the west. It's the room with the food. That is a good room.
+
+Even though this is the sitting room you can't sit on everything. There are a lot of ""no""s here, like the thing you can't scratch, and the tall thing and the four-legged thing that isn't alive but that stands still with the box of light on its back.
+
+On the long soft thing you can see a magic wand.",take wand,put down map,0.5786548852920532
+"One of the matches starts to burn.
+
+",Light candles with match,put down map,0.4795440137386322
+"Maintenance Room
+This is what appears to have been the maintenance room for Flood Control Dam #3. Apparently, this room has been ransacked recently, for most of the valuable equipment is gone. On the wall in front of you is a group of buttons colored blue, yellow, brown, and red. There are doorways to the west and south.
+There is a group of tool chests here.
+There is a wrench here.
+There is an object which looks like a tube of toothpaste here.
+There is a screwdriver here.
+
+",Get screwdriver,put down map,0.4518844187259674
+"Ladder Bottom
+This is a rather wide room. On one side is the bottom of a narrow wooden ladder. To the west and the south are passages leaving the room.
+
+",S,put down map,0.3393077552318573
+"
+Food Room",take inventory,put down map,0.5888408422470093
+"Living Room
+There is a rusty knife here.
+There is a clove of garlic here.
+There is a nasty knife here.
+An ornamented sceptre, tapering to a sharp point, is here.
+Your collection of treasures consists of:
+    A leather bag of coins
+    A platinum bar
+    A crystal skull
+    A gold coffin
+
+",Drop pile,put down map,0.5061705112457275
+"Taken.
+
+",Get pile,put down map,0.48954588174819946
+"You are still recovering from that last blow, so your attack is ineffective.
+The thief slowly approaches, strikes like a snake, and leaves you wounded.
+
+",throw rusty knife at lantern,put down map,0.5430495738983154
+"North of House
+
+",E,put down map,0.3757920563220978
+"Cave
+This is a tiny cave with entrances west and north, and a dark, forbidding staircase leading down.
+
+",west,put down map,0.46083569526672363
+"Dome Room
+
+",D,put down map,0.3582054376602173
+"Taken.
+
+",Put chalice in case,put down map,0.551881730556488
+"Dropped.
+
+",take nasty knife,put down map,0.5185261964797974
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",E,put down map,0.37579208612442017
+"The Troll Room
+
+",W,put down map,0.33364951610565186
+"Narrow Passage
+
+",put down lantern,put down map,0.6029222011566162
+"You've got the hang of this trick now for sure! One more bite on the wand brings up something new.
+
+This is more like it! Inside the box now is this lady putting together some tasty looking food! You're almost drooling just watching. This has got to make your pet think about eating!
+
+[Your score has just gone up by ten points.]",examine box,put down map,0.5666389465332031
+"Taken.
+
+",Get wrench,put down map,0.4641730785369873
+"East-West Passage
+
+",E,put down map,0.37579211592674255
+"Deep Canyon
+
+",put down all,put down map,0.5664050579071045
+"Opened.
+
+",Put coffin in case,put down map,0.5057540535926819
+"Chasm
+A chasm runs southwest to northeast and the path follows it. You are on the south side of the chasm, where a crack opens into a passage.
+
+",S,put down map,0.3393076956272125
