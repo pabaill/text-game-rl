@@ -17,10 +17,12 @@ def test_action_generation(actor, llama, test_data, batch_size=32, output_file="
     """
 
     actor.eval()
-
     results = []
-
     batch_data = test_data.sample(batch_size)
+
+    # Create action bank
+    action_texts = test_data['action'].unique()
+    action_embeddings = torch.stack([llama.encode_text(a).squeeze(0) for a in action_texts])
 
     for index, row in batch_data.iterrows():
         prev_state_text = row['state']
@@ -31,12 +33,22 @@ def test_action_generation(actor, llama, test_data, batch_size=32, output_file="
         expected_action_embedding = llama.encode_text(expected_action_text).squeeze(0)
 
         # Get the action predicted by the agent
-        predicted_action_embedding = actor(prev_state_embedding)
+        # predicted_action_embedding = actor(prev_state_embedding)
         
         # Decode the predicted action from the embedding
-        predicted_action_text = llama.decode_text(predicted_action_embedding)
+        # predicted_action_text = llama.decode_text(predicted_action_embedding)
 
-        similarity = cosine_similarity(predicted_action_embedding.unsqueeze(0), expected_action_embedding.unsqueeze(0)).item()
+        # similarity = cosine_similarity(predicted_action_embedding.unsqueeze(0), expected_action_embedding.unsqueeze(0)).item()
+
+        # Find closest action in action bank
+        similarities = torch.nn.functional.cosine_similarity(
+            predicted_action_embedding.unsqueeze(0), 
+            action_embeddings
+        )
+        closest_idx = similarities.argmax()
+        predicted_action_text = action_texts[closest_idx]
+        
+        similarity = similarities[closest_idx].item()
 
         # Append the results to the list
         results.append({
