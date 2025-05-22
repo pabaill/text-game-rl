@@ -261,7 +261,7 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
             "reward": episode_reward,
             "raw_reward": episode_raw_reward
         })
-        print(f"    reward = {reward})
+        print(f"    reward = {reward}")
 
         if episode % 100 == 0:
             # Save the model after training
