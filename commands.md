@@ -1,0 +1,1 @@
+python SAC/train.py --csv {csv}

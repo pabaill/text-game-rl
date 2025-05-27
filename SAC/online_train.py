@@ -11,14 +11,49 @@ from copy import deepcopy
 import wandb
 import argparse
 from tqdm import tqdm
+import random
 
-def decode_action(action_embedding, valid_actions, llama):
-    # Choose most similar available action
-    valid_action_embeddings = [llama.encode_text(action).squeeze(0) for action in valid_actions]
-    similarities = [cosine_similarity(action_embedding.unsqueeze(0), valid_embedding.unsqueeze(0)).item() 
-                    for valid_embedding in valid_action_embeddings]
-    best_action_idx = similarities.index(max(similarities))
-    return valid_actions[best_action_idx]
+
+def generate_embedding_action_dict(valid_actions, llama):
+    """
+    From List[str] of our valid actions, embed each action and store in a dict of
+    {action_embedding : action_text} such that decode action can take the action_embedding
+    produced by trained actor model and return a valid action text.
+    """
+    embedding_to_action = {}
+    for action in valid_actions:
+        # possible optimization: append .to(torch.float{n}) where n is num bits, could save memory
+        action_embedding = llama.encode_text(action).squeeze(0)
+        embedding_to_action[action_embedding] = action
+    return embedding_to_action
+
+
+def decode_action(action_embedding, embedding_to_action, k=5):
+    """
+    Decode the action embedding using nucleus sampling.
+    """
+    similarities = []
+    for embedding, action in embedding_to_action.items():
+        # get the cosine similarity betwen predicted action embedding and all valid action embeddings
+        similarity = cosine_similarity(action_embedding.unsqueeze(0), embedding.unsqueeze(0)).item()
+        similarities.append((similarity, action))
+
+    # sort similarities by actual similarity value and get top k, choose a random one
+    similarities.sort(key=lambda x: x[0], reverse=True)
+    top_k_actions = [action for _, action in similarities[:k]]
+    selected_action = random.choice(top_k_actions)
+    return selected_action
+
+
+# PREVIOUSLY:
+# def decode_action(action_embedding, valid_actions, llama):
+#     # Choose most similar available action
+#     valid_action_embeddings = [llama.encode_text(action).squeeze(0) for action in valid_actions]
+#     similarities = [cosine_similarity(action_embedding.unsqueeze(0), valid_embedding.unsqueeze(0)).item() 
+#                     for valid_embedding in valid_action_embeddings]
+#     best_action_idx = similarities.index(max(similarities))
+#     return valid_actions[best_action_idx]
+
 
 def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
@@ -33,6 +68,9 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
         "reward_shape_lambda": _lambda
     })
 
+    # set seed for reproducibility (mainly for decode_action)
+    random.seed(16)
+
     env = TextAdventureEnv(game_path)
 
     llama = LLaMAWrapper()
@@ -40,6 +78,10 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
     critic = Critic(state_dim=state_dim, action_dim=action_dim)
     reward_shaper = RewardShaper(state_dim)
     target_critic = deepcopy(critic)
+
+    # generate the dict of action_text to action_embedding
+    valid_actions = env.get_valid_actions()
+    embedding_to_action = generate_embedding_action_dict(valid_actions, llama)
 
     replay_buffer = ReplayBuffer()
 
@@ -65,7 +107,9 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
 
             prev_state_embedding = llama.encode_text(prev_state_text).squeeze(0)
             action_embedding = actor(prev_state_embedding)
-            action_text = decode_action(action_embedding, env.get_valid_actions(), llama)
+            
+            # PREVIOUSLY: action_text = decode_action(action_embedding, env.get_valid_actions(), llama)
+            action_text = decode_action(action_embedding, embedding_to_action)
 
             next_state_text, reward, done, info = env.step(action_text)
             next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
