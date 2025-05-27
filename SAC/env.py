@@ -1,8 +1,15 @@
 import gym
 from jericho import *
 import random
+from tqdm import tqdm
 
 class TextAdventureEnv(gym.Env):
+    """
+    Has three available variables:
+    game: the game object itself from jericho
+    valid_actions: list of strings of valid game actions
+    game_states: list of possible game states in walkthrough in tuple (state_text, state_embedding)
+    """
     def __init__(self, game_path):
         self.game = FrotzEnv(game_path)
         # Tuples of (state_text, state_embedding)
@@ -13,8 +20,8 @@ class TextAdventureEnv(gym.Env):
         noun_list = [item.word for item in game_dict if item.is_noun]
         verb_list = [item.word for item in game_dict if item.is_verb]
         valid_actions = []
-        for v in verb_list:
-            for n in noun_list:
+        for v in tqdm(verb_list, desc="Loading verbs..."):
+            for n in tqdm(noun_list, desc="Loading nouns..."):
                 valid_actions.append(f"{v} {n}")
         valid_actions.extend([item.word for item in game_dict if item.is_dir])
         self.valid_actions = valid_actions
