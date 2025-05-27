@@ -1,4 +1,3 @@
-import pandas as pd
 import torch
 from torch import nn
 from torch.nn.functional import cosine_similarity
@@ -14,6 +13,7 @@ import argparse
 from tqdm import tqdm
 
 def decode_action(action_embedding, valid_actions, llama):
+    # Choose most similar available action
     valid_action_embeddings = [llama.encode_text(action).squeeze(0) for action in valid_actions]
     similarities = [cosine_similarity(action_embedding.unsqueeze(0), valid_embedding.unsqueeze(0)).item() 
                     for valid_embedding in valid_action_embeddings]
@@ -21,8 +21,7 @@ def decode_action(action_embedding, valid_actions, llama):
     return valid_actions[best_action_idx]
 
 def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, wandb_proj=None, wandb_entity=None):
-    # Initialize WandB for logging
-    wandb.init(project=wandb_proj, entity=wandb_entity)  # Replace with your W&B username and project name
+    wandb.init(project=wandb_proj, entity=wandb_entity)
     wandb.config.update({
         "learning_rate_actor": lra,
         "learning_rate_critic": lrc,
@@ -48,18 +47,17 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
     optimizer_critic = torch.optim.Adam(critic.parameters(), lr=lrc)
     optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
 
-
     for episode in tqdm(range(episodes), unit="episode"):
         episode_loss_actor = 0
         episode_loss_critic = 0
         episode_reward = 0
         episode_raw_reward = 0
 
+        # Reset environment to a random point in the walkthrough
         state_text = env.reset()
         done = False
         moves_remaining = max_ep_len
 
-        # track episodes on console
         print(f"Episode num {episode}")
         
         while not done:
@@ -67,14 +65,16 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
 
             prev_state_embedding = llama.encode_text(prev_state_text).squeeze(0)
             action_embedding = actor(prev_state_embedding)
-            action_text = decode_action(action_embedding, env.valid_actions, llama)
+            action_text = decode_action(action_embedding, env.get_valid_actions(), llama)
 
             next_state_text, reward, done, info = env.step(action_text)
             next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
 
+            prev_state_text = next_state_text
+
             if learn_reward_shaping:
                 # Use net to learn reward shaping method
-                potential_diff = reward_shaper(prev_state_embedding, next_state_embedding).squeeze()  # Assuming shaper outputs a scalar
+                potential_diff = reward_shaper(prev_state_embedding, next_state_embedding).squeeze()
                 shaped_reward = reward + _lambda * potential_diff
             else:
                 # Compute state value functions
@@ -82,7 +82,7 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
                 a_next = actor(next_state_embedding)
                 v_next = critic(next_state_embedding, a_next).mean()
 
-                # Shape the reward using the critic as a potential function with discount gamma
+                # Shape the reward using the critic as a potential function
                 v_current_detach = v_current.detach()
                 v_next_detach = v_next.detach()
                 shaped_reward = reward + _lambda * (gamma * v_next_detach - v_current_detach)
@@ -154,7 +154,7 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
             "reward": episode_reward,
             "raw_reward": episode_raw_reward
         })
-        print(f"    reward = {reward}")
+        print(f"reward = {reward}")
 
         if episode % 100 == 0:
             # Save the model after training
@@ -167,7 +167,7 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train RL agent from CSV dataset.")
-    parser.add_argument('--csv', type=str, required=True, help='Path to the CSV file with the dataset')
+    parser.add_argument('--game_path', type=str, required=True, help='Path to the game to learn')
     parser.add_argument('--lambda_', type=float, default=0.1, help='Reward shaping lambda')
     parser.add_argument('--lra', type=float, default=1e-4, help='Learning rate for actor')
     parser.add_argument('--lrc', type=float, default=1e-4, help='Learning rate for critic')
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     train(
-        csv_path=args.csv,
+        args.game_path,
         _lambda=args.lambda_,
         lra=args.lra,
         lrc=args.lrc,
