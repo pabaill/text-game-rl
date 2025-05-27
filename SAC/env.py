@@ -12,4 +12,6 @@ class TextAdventureEnv(gym.Env):
 
     def step(self, action: str):
         next_state, reward, done, info = self.game.step(action)
+        inventory = ",".join([item.name for item in self.game.get_inventory()])
+        next_state = f"Holding: {inventory}. State: {next_state}"
         return next_state, reward, done, info
