@@ -8,6 +8,16 @@ class TextAdventureEnv(gym.Env):
         # Tuples of (state_text, state_embedding)
         game_states = []
         env = FrotzEnv(game_path)
+        # Get all possible actions
+        game_dict = env.get_dictionary()
+        noun_list = [item.word for item in game_dict if item.is_noun]
+        verb_list = [item.word for item in game_dict if item.is_verb]
+        valid_actions = []
+        for v in verb_list:
+            for n in noun_list:
+                valid_actions.append(f"{v} {n}")
+        valid_actions.extend([item.word for item in game_dict if item.is_dir])
+        self.valid_actions = valid_actions
         walkthrough = env.get_walkthrough()
         state_text, _ = env.reset()
         for action in walkthrough:
