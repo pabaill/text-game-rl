@@ -41,7 +41,7 @@ def decode_action(action_embedding, embedding_to_action, is_training=True, k=5):
     # sort similarities by actual similarity value and get top k, choose a random one
     similarities.sort(key=lambda x: x[0], reverse=True)
     if is_training:
-        selected_action = similarities[0]
+        selected_action = similarities[0][1]
     else:
         top_k_actions = [action for _, action in similarities[:k]]
         selected_action = random.choice(top_k_actions)
