@@ -28,7 +28,7 @@ def generate_embedding_action_dict(valid_actions, llama):
     return embedding_to_action
 
 
-def decode_action(action_embedding, embedding_to_action, k=5):
+def decode_action(action_embedding, embedding_to_action, is_training=True, k=5):
     """
     Decode the action embedding using nucleus sampling.
     """
@@ -40,8 +40,11 @@ def decode_action(action_embedding, embedding_to_action, k=5):
 
     # sort similarities by actual similarity value and get top k, choose a random one
     similarities.sort(key=lambda x: x[0], reverse=True)
-    top_k_actions = [action for _, action in similarities[:k]]
-    selected_action = random.choice(top_k_actions)
+    if is_training:
+        selected_action = similarities[0]
+    else:
+        top_k_actions = [action for _, action in similarities[:k]]
+        selected_action = random.choice(top_k_actions)
     return selected_action
 
 
@@ -54,8 +57,65 @@ def decode_action(action_embedding, embedding_to_action, k=5):
 #     best_action_idx = similarities.index(max(similarities))
 #     return valid_actions[best_action_idx]
 
+def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_buffer, steps=50, batch_size=32, gamma=0.9, max_ep_len=20):
+    valid_actions = env.get_valid_actions()
+    
+    for step in tqdm(range(steps), desc="Pretraining Critic"):
+        state_text = env.reset()
+        moves_left = max_ep_len
+        done = False
 
-def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, wandb_proj=None, wandb_entity=None):
+        while not done:
+            state_embedding = llama.encode_text(state_text).squeeze(0)
+
+            # Random action
+            action_text = random.choice(valid_actions)
+            action_embedding = llama.encode_text(action_text).squeeze(0)
+
+            next_state_text, reward, done, _ = env.step(action_text)
+            next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
+
+            replay_buffer.add((
+                state_embedding.detach(),
+                action_embedding.detach(),
+                torch.tensor([reward]),
+                next_state_embedding.detach(),
+                done
+            ))
+
+            state_text = next_state_text
+
+            if len(replay_buffer.buffer) > batch_size:
+                # Sample batch
+                batch = replay_buffer.sample(batch_size)
+                s, a, r, s_next, d = zip(*batch)
+                s = torch.stack(s)
+                a = torch.stack(a)
+                r = torch.stack(r)
+                s_next = torch.stack(s_next)
+                d = torch.tensor(d).unsqueeze(1).float()
+
+                with torch.no_grad():
+                    a_next = a  # keep same for bootstrapping — or sample randomly
+                    q_target = r + gamma * (1 - d) * target_critic(s_next, a_next)
+
+                q_current = critic(s, a)
+                critic_loss = nn.MSELoss()(q_current, q_target)
+
+                optimizer_critic.zero_grad()
+                critic_loss.backward()
+                optimizer_critic.step()
+
+                # Soft update
+                for target_param, param in zip(target_critic.parameters(), critic.parameters()):
+                    target_param.data.copy_(0.995 * target_param.data + 0.005 * param.data)
+            moves_left -= 1
+            if moves_left <= 0 or done:
+                break
+
+
+
+def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -89,6 +149,15 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
     optimizer_critic = torch.optim.Adam(critic.parameters(), lr=lrc)
     optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
 
+    if pretrain_critic_enabled:
+        pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_buffer)
+
+    # NEW curriculum learning
+    if curriculum_enabled:
+        curriculum_max_idx = len(env.game_states) - 1
+        curriculum_min_idx = 0
+        curriculum_step_interval = 100
+
     for episode in tqdm(range(episodes), unit="episode"):
         episode_loss_actor = 0
         episode_loss_critic = 0
@@ -96,7 +165,12 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         episode_raw_reward = 0
 
         # Reset environment to a random point in the walkthrough
-        state_text = env.reset()
+        # Curriculum learning starts from later, reward rich states then steps backwards
+        if curriculum_enabled:
+            start_idx = random.randint(curriculum_min_idx, curriculum_max_idx)
+            state_text = env.reset_to_state(start_idx)
+        else:
+            state_text = env.reset()
         done = False
         moves_remaining = max_ep_len
 
@@ -200,6 +274,11 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         })
         print(f"reward = {reward}")
 
+        # Step back learning in curriculum
+        if curriculum_enabled and episode % curriculum_step_interval == 0:
+            curriculum_max_idx = max(curriculum_max_idx - 1, curriculum_min_idx)
+            print(f"Curriculum updated: max start index is now {curriculum_max_idx}")
+
         if episode % 50 == 0:
             # Save the model after training
             torch.save(actor.state_dict(), f"checkpoints/online/actor_model_ckpt_{episode}.pth")
@@ -224,6 +303,8 @@ if __name__ == '__main__':
     parser.add_argument('--train_only', type=bool, default=False, help='No eval or test steps')
     parser.add_argument('--wandb_proj', type=str, default=None, help='wandb project name')
     parser.add_argument('--wandb_entity', type=str, default=None, help='wandb entity name')
+    parser.add_argument('--curriculum_enabled', type=bool, default=False, help='Use curriculum learning to slowly step back game start index')
+    parser.add_argument('--pretrain_critic_enabled', type=bool, default=False, help='Run initial loop to gain quality expreience for critic')
 
     args = parser.parse_args()
     train(
@@ -238,6 +319,8 @@ if __name__ == '__main__':
         state_dim=args.state_dim,
         learn_reward_shaping=args.learn_reward_shaping,
         train_only=args.train_only,
+        curriculum_enabled=args.curriculum_enabled,
+        pretrain_critic_enabled=args.pretrain_critic_enabled,
         wandb_proj=args.wandb_proj,
         wandb_entity=args.wandb_entity
     )
