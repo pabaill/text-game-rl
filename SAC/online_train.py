@@ -115,7 +115,7 @@ def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_
 
 
 
-def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, wandb_proj=None, wandb_entity=None):
+def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -149,6 +149,15 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
     optimizer_critic = torch.optim.Adam(critic.parameters(), lr=lrc)
     optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
 
+    if pretrain_critic_enabled:
+        pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_buffer)
+
+    # NEW curriculum learning
+    if curriculum_enabled:
+        curriculum_max_idx = len(env.game_states) - 1
+        curriculum_min_idx = 0
+        curriculum_step_interval = 100
+
     for episode in tqdm(range(episodes), unit="episode"):
         episode_loss_actor = 0
         episode_loss_critic = 0
@@ -156,7 +165,12 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         episode_raw_reward = 0
 
         # Reset environment to a random point in the walkthrough
-        state_text = env.reset()
+        # Curriculum learning starts from later, reward rich states then steps backwards
+        if curriculum_enabled:
+            start_idx = random.randint(curriculum_min_idx, curriculum_max_idx)
+            state_text = env.reset_to_state(start_idx)
+        else:
+            state_text = env.reset()
         done = False
         moves_remaining = max_ep_len
 
@@ -260,6 +274,11 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         })
         print(f"reward = {reward}")
 
+        # Step back learning in curriculum
+        if curriculum_enabled and episode % curriculum_step_interval == 0:
+            curriculum_max_idx = max(curriculum_max_idx - 1, curriculum_min_idx)
+            print(f"Curriculum updated: max start index is now {curriculum_max_idx}")
+
         if episode % 50 == 0:
             # Save the model after training
             torch.save(actor.state_dict(), f"checkpoints/online/actor_model_ckpt_{episode}.pth")
@@ -284,6 +303,8 @@ if __name__ == '__main__':
     parser.add_argument('--train_only', type=bool, default=False, help='No eval or test steps')
     parser.add_argument('--wandb_proj', type=str, default=None, help='wandb project name')
     parser.add_argument('--wandb_entity', type=str, default=None, help='wandb entity name')
+    parser.add_argument('--curriculum_enabled', type=bool, default=False, help='Use curriculum learning to slowly step back game start index')
+    parser.add_argument('--pretrain_critic_enabled', type=bool, default=False, help='Run initial loop to gain quality expreience for critic')
 
     args = parser.parse_args()
     train(
@@ -298,6 +319,8 @@ if __name__ == '__main__':
         state_dim=args.state_dim,
         learn_reward_shaping=args.learn_reward_shaping,
         train_only=args.train_only,
+        curriculum_enabled=args.curriculum_enabled,
+        pretrain_critic_enabled=args.pretrain_critic_enabled,
         wandb_proj=args.wandb_proj,
         wandb_entity=args.wandb_entity
     )

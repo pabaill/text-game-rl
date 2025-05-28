@@ -38,6 +38,12 @@ class TextAdventureEnv(gym.Env):
         self.game.set_state(state[1])
         return state[0]
     
+    def reset_to_state(self, start_idx):
+        state_text, state_embed = self.game_states[start_idx]
+        self.game.set_state(state_embed)
+        return state_text
+
+    
     def get_valid_actions(self):
         return self.game.get_valid_actions()
 
