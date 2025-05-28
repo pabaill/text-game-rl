@@ -2,6 +2,8 @@ import gym
 from jericho import *
 import random
 from tqdm import tqdm
+from itertools import product
+
 
 class TextAdventureEnv(gym.Env):
     """
@@ -20,9 +22,8 @@ class TextAdventureEnv(gym.Env):
         noun_list = [item.word for item in game_dict if item.is_noun]
         verb_list = [item.word for item in game_dict if item.is_verb]
         valid_actions = []
-        for v in tqdm(verb_list, desc="Loading verbs..."):
-            for n in tqdm(noun_list, desc="Loading nouns..."):
-                valid_actions.append(f"{v} {n}")
+        for v, n in tqdm(product(verb_list, noun_list), desc="Generating verb-noun pairs", total=len(verb_list)*len(noun_list)):
+            valid_actions.append(f"{v} {n}")
         valid_actions.extend([item.word for item in game_dict if item.is_dir])
         self.valid_actions = valid_actions
         walkthrough = env.get_walkthrough()

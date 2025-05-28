@@ -55,7 +55,7 @@ def decode_action(action_embedding, embedding_to_action, k=5):
 #     return valid_actions[best_action_idx]
 
 
-def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, wandb_proj=None, wandb_entity=None):
+def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -200,11 +200,11 @@ def train(game_path, max_ep_len=200, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size
         })
         print(f"reward = {reward}")
 
-        if episode % 100 == 0:
+        if episode % 50 == 0:
             # Save the model after training
-            torch.save(actor.state_dict(), f"checkpoints/actor_model_ckpt_{episode}.pth")
-            torch.save(critic.state_dict(), f"checkpoints/critic_model_ckpt_{episode}.pth")
-            torch.save(reward_shaper.state_dict(), f"checkpoints/reward_shaper_ckpt_{episode}.pth")
+            torch.save(actor.state_dict(), f"checkpoints/online/actor_model_ckpt_{episode}.pth")
+            torch.save(critic.state_dict(), f"checkpoints/online/critic_model_ckpt_{episode}.pth")
+            torch.save(reward_shaper.state_dict(), f"checkpoints/online/reward_shaper_ckpt_{episode}.pth")
             wandb.save(f"actor_model_ckpt_{episode}.pth")
             wandb.save(f"critic_model_ckpt_{episode}.pth")
             wandb.save(f"reward_shaper_ckpt_{episode}.pth")

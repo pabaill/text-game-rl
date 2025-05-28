@@ -33,7 +33,7 @@ def test_action_generation(actor, llama, test_data, batch_size=32, output_file="
         expected_action_embedding = llama.encode_text(expected_action_text).squeeze(0)
 
         # Get the action predicted by the agent
-        # predicted_action_embedding = actor(prev_state_embedding)
+        predicted_action_embedding = actor(prev_state_embedding)
         
         # Decode the predicted action from the embedding
         # predicted_action_text = llama.decode_text(predicted_action_embedding)
@@ -277,9 +277,9 @@ def train(csv_path, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=100
 
         if episode % 100 == 0:
             # Save the model after training
-            torch.save(actor.state_dict(), f"checkpoints/actor_model_ckpt_{episode}.pth")
-            torch.save(critic.state_dict(), f"checkpoints/critic_model_ckpt_{episode}.pth")
-            torch.save(reward_shaper.state_dict(), f"checkpoints/reward_shaper_ckpt_{episode}.pth")
+            torch.save(actor.state_dict(), f"checkpoints/offline/actor_model_ckpt_{episode}.pth")
+            torch.save(critic.state_dict(), f"checkpoints/offline/critic_model_ckpt_{episode}.pth")
+            torch.save(reward_shaper.state_dict(), f"checkpoints/offline/reward_shaper_ckpt_{episode}.pth")
             wandb.save(f"actor_model_ckpt_{episode}.pth")
             wandb.save(f"critic_model_ckpt_{episode}.pth")
             wandb.save(f"reward_shaper_ckpt_{episode}.pth")

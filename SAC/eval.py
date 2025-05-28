@@ -6,14 +6,16 @@ from llama import LLaMAWrapper
 from ac import Actor
 import argparse
 
-def evaluate_model(actor, llama, test_data, batch_size=32, output_file="evaluation_results.csv"):
+BATCH_SIZE = 100
+
+def evaluate_model(actor, llama, test_data, batch_size=BATCH_SIZE, output_file="evaluation_results.csv"):
     """
     Evaluate the model by comparing predicted actions to ground truth actions using cosine similarity.
     Logs embedding information for debugging purposes.
     """
     actor.eval()
     results = []
-    batch_data = test_data.sample(batch_size)
+    batch_data = test_data.sample(batch_size, replace=True)
 
     # Create action bank
     action_texts = test_data['action'].unique()
@@ -29,7 +31,8 @@ def evaluate_model(actor, llama, test_data, batch_size=32, output_file="evaluati
 
         # Get actor output before and after normalization
         raw_output = actor(prev_state_embedding)
-        predicted_action_embedding = nn.functional.normalize(raw_output, p=2, dim=-1)
+        # predicted_action_embedding = nn.functional.normalize(raw_output, p=2, dim=-1)
+        predicted_action_embedding = raw_output
 
         # Logging for debugging
         print(f"[Sample {idx}] Prev state embedding (first 5 dims): {prev_state_embedding[:5]}")
@@ -39,28 +42,33 @@ def evaluate_model(actor, llama, test_data, batch_size=32, output_file="evaluati
         print(f"[Sample {idx}] Vector norms - Predicted: {predicted_action_embedding.norm():.4f}, Expected: {expected_action_embedding.norm():.4f}")
 
         # Compare to all action candidates
-        similarities = cosine_similarity(predicted_action_embedding.unsqueeze(0), action_embeddings)
-        closest_idx = similarities.argmax()
-        predicted_action_text = action_texts[closest_idx]
-        similarity = cosine_similarity(
-            predicted_action_embedding.unsqueeze(0),
-            expected_action_embedding.unsqueeze(0),
-            dim=1
-        ).item()
+        # similarities = cosine_similarity(predicted_action_embedding.unsqueeze(0), action_embeddings)
+        # closest_idx = similarities.argmax()
+        # predicted_action_text = action_texts[closest_idx]
+        # similarity = cosine_similarity(
+        #     predicted_action_embedding.unsqueeze(0),
+        #     expected_action_embedding.unsqueeze(0),
+        #     dim=1
+        # ).item()
+
+        # euclidian_dist = torch.linalg.norm(action_embeddings - predicted_action_embedding.unsqueeze(0), dim=1)
+        # closest_idx = euclidian_dist.argmin()
+        # predicted_action_text = action_texts[closest_idx]
+        # similarity = euclidian_dist[closest_idx].item()
+
+        similarity = torch.matmul(action_embeddings, predicted_action_embedding)
+        predicted_action_text = action_texts[similarity.argmax()]
 
         # Append evaluation results
         results.append({
             "state": prev_state_text,
             "expected_action": expected_action_text,
             "predicted_action": predicted_action_text,
-            "cosine_similarity": similarity
         })
 
     results_df = pd.DataFrame(results)
     results_df.to_csv(output_file, index=False)
-    avg_similarity = results_df['cosine_similarity'].mean()
-    print(f"\nAverage cosine similarity to ground truth: {avg_similarity:.4f}")
-    return avg_similarity
+    return 
 
 def run_evaluation(csv_path, actor_ckpt_path, state_dim, action_dim, output_file="evaluation_results.csv"):
     data = pd.read_csv(csv_path)

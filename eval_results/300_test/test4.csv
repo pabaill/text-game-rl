@@ -1,0 +1,114 @@
+state,expected_action,predicted_action,cosine_similarity
+"East-West Passage
+
+",west,w,26067986.0
+"Maze
+This is part of a maze of twisty little passages, all alike.
+
+",U,push blue button,32251358.0
+"Torch Room
+This is a large room with a prominent doorway leading to a down staircase. Above you is a large dome. Up around the edge of the dome (20 feet up) is a wooden railing. In the center of the room sits a white marble pedestal.
+A piece of rope descends from the railing above, ending some five feet above your head.
+Sitting on the pedestal is a flaming torch, made of ivory.
+
+",Douse lamp,w,44275576.0
+"North of House
+
+",E,x box,24961324.0
+You snatch up the magic wand with your mouth and hold on tight.,d,w,43075924.0
+"Done.
+
+",D,w,24278140.0
+"Taken.
+
+",Read label,w,28609666.0
+"Mine Entrance
+
+",put down lantern,w,26764288.0
+"You pause for a second. Your stomach growls.
+
+You finally hear a familiar rush of water from the little water room and, after a second, the sound of the door opening.",examine box,w,42860100.0
+"You are still recovering from that last blow, so your attack is ineffective.
+The thief slowly approaches, strikes like a snake, and leaves you wounded.
+
+",throw rusty knife at lantern,w,39548892.0
+"Making sure you are facing the box of light, you carefully press down on the wand with your teeth and are delighted when the box of light flickers and changes! 
+
+Now you see a bunch of tiny people running around chasing a little bitty ball. Uh-oh, someone got pushed. Ugh, the faces got all huge, and they don't look happy.",get in all,w,43348236.0
+On the long soft thing are a bunch of smaller soft things that together make up a comfy place for sitting or sleeping.,north,w,44545448.0
+"Living Room
+There is a clove of garlic here.
+There is a nasty knife here.
+There is a pair of candles here.
+There is a black book here.
+There is a brass bell here.
+An ornamented sceptre, tapering to a sharp point, is here.
+
+",Open case,w,44003228.0
+"
+Sitting Room
+Your pet is here, all stretched out on the long soft thing and snoring. ",west,w,38393796.0
+"Dropped.
+
+",take axe,throw egg at door,25995358.0
+"White Cliffs Beach
+You are on a narrow strip of beach which runs along the base of the White Cliffs. There is a narrow path heading south along the Cliffs and a tight passage leading west into the cliffs themselves.
+
+",light plastic with torch,take cushion,38748444.0
+"Behind House
+
+",W,w,29394506.0
+"Dropped.
+
+",blow out candles,throw egg at door,25995358.0
+"You get off the long soft thing.
+
+Sitting Room",get in all,w,39183020.0
+"
+Sitting Room
+Your pet is here, all stretched out on the long soft thing and snoring. ",west,w,38393796.0
+"Taken.
+
+",Move rug,w,28609666.0
+"Taken.
+
+",throw lantern at egg,w,28609666.0
+"You are now in the magic boat.
+
+",put down all,w,33794548.0
+"Altar
+There is a sword here.
+
+",put down torch,Get rope,35924628.0
+"Rocky Ledge
+You are on a ledge about halfway up the wall of the river canyon. You can see from here that the main flow from Aragain Falls twists along a passage which it is impossible for you to enter. Below you is the canyon bottom. Above you is more cliff, which appears climbable.
+
+",down,w,44363724.0
+"Coal Mine
+
+",put down lantern,close cold box,24877716.0
+"Coal Mine
+
+",east,close cold box,24877716.0
+"You tuck your head up under your pet and push back and forth to shake him.
+
+Your pet twitches a little and stirs, then is still again. It's a start at waking him up.",bark,w,43731172.0
+"Maze
+This is part of a maze of twisty little passages, all alike.
+
+",look around passages,push blue button,32251358.0
+"The flame is extinguished.
+
+",Get book,w,32739990.0
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",Douse lamp,w,41917952.0
+"Done.
+
+",take all from case,w,24278140.0

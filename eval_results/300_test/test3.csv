@@ -1,0 +1,134 @@
+state,expected_action,predicted_action,cosine_similarity
+"Round Room
+
+",W,put down map,0.33364948630332947
+"Narrow Passage
+
+",turn on lantern,put down map,0.5194698572158813
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",W,put down map,0.33364954590797424
+"Forest
+
+",put all in coffin,put down map,0.5620989799499512
+"Cellar
+There is a bloody axe here.
+
+",N,put down map,0.3359448313713074
+"Dome Room
+You are at the periphery of a large dome, which forms the ceiling of another room below. Protecting you from a precipitous drop is a wooden railing which circles the dome.
+
+",Tie rope to railing,put down map,0.5183591842651367
+"The flame is extinguished.
+
+",Get book,put down map,0.44660520553588867
+"Taken.
+
+",light remains with torch,put down map,0.5394795536994934
+"Forest Path
+This is a path winding through a dimly lit forest. The path heads north-south here. One particularly large tree with some low branches stands at the edge of the path.
+
+",U,put down map,0.34326115250587463
+"Taken.
+
+",throw tan at lantern,put down map,0.5817335247993469
+"Strange Passage
+
+",put down jewels,put down map,0.5936644077301025
+"Coal Mine
+This is a non-descript part of a coal mine.
+
+",east,put down map,0.4914357662200928
+"The brass lantern is now on.
+
+Cellar
+You are in a dark and damp cellar with a narrow passageway leading north, and a crawlway to the south. On the west is the bottom of a steep metal ramp which is unclimbable.
+
+",N,put down map,0.33594492077827454
+"Squeaky Room
+You are in a small room. Strange squeaky sounds may be heard coming from the passage at the north end. You may also escape to the east.
+
+",put down garlic,put down map,0.5800025463104248
+"Copyright (c) 1981, 1982, 1983 Infocom, Inc. All rights reserved.
+ZORK is a registered trademark of Infocom, Inc.
+Revision 88 / Serial number 840726
+
+West of House
+You are standing in an open field west of a white house, with a boarded front door.
+There is a small mailbox here.
+
+",south,put down map,0.44433754682540894
+"East-West Passage
+
+",E,put down map,0.37579214572906494
+"Dropped.
+
+",take tan,put down map,0.5629815459251404
+"Taken.
+
+",turn on matchbook,put down map,0.4977893829345703
+"Sandy Beach
+There is a red buoy here.
+
+",close buoy,put down map,0.5056662559509277
+"Behind House
+
+",east,put down map,0.491435706615448
+"Living Room
+
+",Read book,put down map,0.4532753527164459
+"Done.
+
+",Lower basket,put down map,0.4429219961166382
+"You pause for a second. Your stomach growls.
+
+Your pet makes his way to the food room.
+
+Your pet starts rattling around in the food room. Yes! He must be making a snack!",n,put down map,0.43542370200157166
+"Dome Room
+You are at the periphery of a large dome, which forms the ceiling of another room below. Protecting you from a precipitous drop is a wooden railing which circles the dome.
+
+",Tie rope to railing,put down map,0.5183591842651367
+"Taken.
+
+",throw egg at door,put down map,0.5652195811271667
+"Taken.
+
+",U,put down map,0.3432610332965851
+"East-West Passage
+
+",E,put down map,0.37579214572906494
+"You've got the hang of this trick now for sure! One more bite on the wand brings up something new.
+
+This is more like it! Inside the box now is this lady putting together some tasty looking food! You're almost drooling just watching. This has got to make your pet think about eating!
+
+[Your score has just gone up by ten points.]",z,put down map,0.3922893702983856
+"Each word of the prayer reverberates through the hall in a deafening confusion. As the last word fades, a voice, loud and commanding, speaks: ""Begone, fiends!"" A heart-stopping scream fills the cavern, and the spirits, sensing a greater power, flee through the walls.
+
+",Drop matchbook,put down map,0.5158275365829468
+"Living Room
+There is a clove of garlic here.
+There is a nasty knife here.
+An ornamented sceptre, tapering to a sharp point, is here.
+Your collection of treasures consists of:
+    A gold coffin
+
+",Put skull in case,put down map,0.5335774421691895
+"Maze
+This is part of a maze of twisty little passages, all alike. A skeleton, probably the remains of a luckless adventurer, lies here.
+Beside the skeleton is a rusty knife.
+The deceased adventurer's useless lantern is here.
+There is a skeleton key here.
+An old leather bag, bulging with coins, is here.
+
+",Get knife,put down map,0.43119123578071594
+"Cellar
+There is a bloody axe here.
+
+",N,put down map,0.3359448313713074

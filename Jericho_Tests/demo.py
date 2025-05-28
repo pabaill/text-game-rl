@@ -1,7 +1,7 @@
 from jericho import *
 
 # Create the environment, optionally specifying a random seed
-env = FrotzEnv("../jericho/z-machine-games-master/jericho-game-suite/zork1.z5")
+env = FrotzEnv("../jericho/z-machine-games-master/jericho-game-suite/yomomma.z8")
 initial_observation, info = env.reset()
 walkthrough = env.get_walkthrough()
 for act in walkthrough:

@@ -1,0 +1,461 @@
+state,expected_action,predicted_action
+"You've got the hang of this trick now for sure! One more bite on the wand brings up something new.
+
+This is more like it! Inside the box now is this lady putting together some tasty looking food! You're almost drooling just watching. This has got to make your pet think about eating!
+
+[Your score has just gone up by ten points.]",z,put down map
+"Click.
+
+",S,put down map
+"The Troll Room
+
+",west,put down map
+"Behind House
+
+",put down all,put down map
+"North of House
+
+",E,put down map
+You push the door with your nose and close the cold box.,e,put down map
+"Dropped.
+
+",shake egg,put down map
+"White Cliffs Beach
+You are on a narrow strip of beach which runs along the base of the White Cliffs. There is a narrow path heading south along the Cliffs and a tight passage leading west into the cliffs themselves.
+
+",light plastic with torch,put down map
+"Torch Room
+
+",turn on lantern,put down map
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",Douse lamp,put down map
+"Behind House
+
+",N,put down map
+"The canary chirps, slightly off-key, an aria from a forgotten opera. From out of the greenery flies a lovely songbird. It perches on a limb just over your head and opens its beak to sing. As it does so a beautiful brass bauble drops from its mouth, bounces off the top of your head, and lands glimmering in the grass. As the canary winds down, the songbird flies away.
+
+",south,put down map
+"North-South Passage
+This is a high north-south passage, which forks to the northeast.
+
+",north,put down map
+"Sometimes the box sleeps but a lot of the time it is loud and noisy and bright. Sometimes you've seen things like the outside inside it or yummy-looking food or even little dogs in there. But everything is the wrong size and doesn't smell right, so you're not sure what that's about.
+
+Right now it looks like some little people inside are yapping at each other. ",west,put down map
+"
+Sitting Room
+You don't hear anything from the food room. But then, making a sandwich is not a very noisy job.",w,put down map
+"Sometimes the box sleeps but a lot of the time it is loud and noisy and bright. Sometimes you've seen things like the outside inside it or yummy-looking food or even little dogs in there. But everything is the wrong size and doesn't smell right, so you're not sure what that's about.
+
+Right now it looks like some little people inside are yapping at each other. ",x couch,put down map
+"Time passes...
+The flow of the river carries you downstream.
+
+Frigid River, in the magic boat
+The sound of rushing water is nearly unbearable here. On the east shore is a large landing area.
+
+",put down all,put down map
+"The brass lantern is now on.
+
+Attic
+This is the attic. The only exit is a stairway leading down.
+A large coil of rope is lying in the corner.
+On a table is a nasty-looking knife.
+
+",down,put down map
+"Drafty Room
+At the end of the chain is a basket.
+
+",put torch in basket,put down map
+"You get off the long soft thing.
+
+Sitting Room",examine box,put down map
+"(As you open your mouth, you drop the magic wand.)
+
+You snatch up the dino with your mouth and hold on tight.
+
+From the other room you can hear the sound of secret places opening and closing.",take off wand,put down map
+"You are on your own feet again.
+
+",take in boat,put down map
+"The thief is momentarily disoriented and can't fight back.
+The thief slowly regains his feet.
+
+",take granite,put down map
+"You love on your pet with some little licks.
+
+Your pet shifts and stretches, blinking. He moves around until he is mostly sitting up.
+
+""Hey Hardy,"" he mumbles.
+
+It might take a little more to get him up and moving, but at least now his eyes are open!
+
+[Your score has just gone up by ten points.]",north,put down map
+"Living Room
+There is a screwdriver here.
+There is a clove of garlic here.
+Your collection of treasures consists of:
+    A beautiful jeweled scarab
+    A large emerald
+    A pot of gold
+    A sceptre
+    A crystal trident
+    A leather bag of coins
+    A platinum bar
+    A crystal skull
+    A gold coffin
+
+",put egg in coffin,put down map
+"You have moved into a dark place.
+It is pitch black. You are likely to be eaten by a grue.
+
+",Light lamp,put down map
+"Forest Path
+
+",put down canary,put down map
+"Cellar
+There is a bloody axe here.
+
+",S,put down map
+"
+
+
+<RRROWWGRROWL> Your stomach growls.
+
+You've been vegging out in front of that flickering screen for hours, your pet by your side. Now your complaining stomach sets you up on your feet, and on a mission.
+
+Snack Time!
+An Interactive Break for a Bite
+by Hardy the Bulldog (with help from Renee Choba)
+Release 1 / Serial number 080929 / Inform 7 build 5U92 (I6/v6.31 lib 6/12N) 
+(For more information please type ABOUT)
+
+Sitting Room
+This is the room where you sit a lot. Well, you sleep here sometimes too. But there is a different room that is just for sleeping, and it is to the north. There's another room to the west. It's the room with the food. That is a good room.
+
+Even though this is the sitting room you can't sit on everything. There are a lot of ""no""s here, like the thing you can't scratch, and the tall thing and the four-legged thing that isn't alive but that stands still with the box of light on its back.
+
+Your pet is here, all stretched out on the long soft thing and snoring. ",w,put down map
+You push the door with your nose and close the cold box.,open all,put down map
+"(with the hand-held air pump)
+The boat inflates and appears seaworthy.
+A tan label is lying inside the boat.
+
+",Drop pump,put down map
+"(with the shovel)
+You can see a scarab here in the sand.
+
+",put down all,put down map
+"Taken.
+
+",put down lantern,put down map
+"Coal Mine
+
+",S,put down map
+"Taken.
+
+",put garlic on marble,put down map
+"Stone Barrow
+You are standing in front of a massive barrow of stone. In the east face is a huge stone door which is open. You cannot see into the dark of the tomb.
+
+",put down map,put down map
+"The cyclops, hearing the name of his father's deadly nemesis, flees the room by knocking down the wall on the east of the room.
+
+",E,put down map
+"Coal Mine
+
+",D,put down map
+"Taken.
+
+",S,put down map
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",throw lantern at egg,put down map
+"Coal Mine
+
+",put down all,put down map
+"Commandment #12592
+
+Oh ye who go about saying unto each:  ""Hello sailor"":
+Dost thou know the magnitude of thy sin before the gods?
+Yea, verily, thou shalt be ground between two stones.
+Shall the angry gods cast thy body into the whirlpool?
+Surely, thy eye shall be put out with a sharp stick!
+Even unto the ends of the earth shalt thou wander and
+Unto the land of the dead shalt thou be sent at last.
+Surely thou shalt repent of thy cunning.
+
+",put down all,put down map
+"Maze
+This is part of a maze of twisty little passages, all alike.
+
+",look around passages,put down map
+"Commandment #12592
+
+Oh ye who go about saying unto each:  ""Hello sailor"":
+Dost thou know the magnitude of thy sin before the gods?
+Yea, verily, thou shalt be ground between two stones.
+Shall the angry gods cast thy body into the whirlpool?
+Surely, thy eye shall be put out with a sharp stick!
+Even unto the ends of the earth shalt thou wander and
+Unto the land of the dead shalt thou be sent at last.
+Surely thou shalt repent of thy cunning.
+
+",light book with torch,put down map
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",W,put down map
+"The machine comes to life (figuratively) with a dazzling display of colored lights and bizarre noises. After a few moments, the excitement abates.
+
+",Open lid,put down map
+"Coal Mine
+This is a non-descript part of a coal mine.
+
+",Sw,put down map
+"The sluice gates open and water pours through the dam.
+
+",east,put down map
+"Forest
+This is a forest, with trees in all directions. To the east, there appears to be sunlight.
+
+",E,put down map
+"Gallery
+This is an art gallery. Most of the paintings have been stolen by vandals with exceptional taste. The vandals left through either the north or west exits.
+Fortunately, there is still one chance for you to be a vandal, for on the far wall is a painting of unparalleled beauty.
+
+",Get painting,put down map
+"Rocky Ledge
+You are on a ledge about halfway up the wall of the river canyon. You can see from here that the main flow from Aragain Falls twists along a passage which it is impossible for you to enter. Below you is the canyon bottom. Above you is more cliff, which appears climbable.
+
+",down,put down map
+"East-West Passage
+
+",W,put down map
+"The acoustics of the room change subtly.
+
+Loud Room
+On the ground is a large platinum bar.
+
+",Get bar,put down map
+"Ladder Bottom
+
+",U,put down map
+"
+Sitting Room
+You don't hear anything from the food room. But then, making a sandwich is not a very noisy job.",take inventory,put down map
+"Cellar
+There is a bloody axe here.
+
+",N,put down map
+"Dropped.
+
+",Drop book,put down map
+"East-West Passage
+
+",put down garlic,put down map
+"You pause for a second. Your stomach growls.
+
+From the other room, you hear your pet banging around and yelling about the dino. Your pet must have almost tripped on it. He's always almost tripping on little stuff like that.
+
+Your pet walks in. He starts to sit down on the long soft thing but stops when he sees what's in the box of light. That lady cooking is doing her job! You pet stands and watches, transfixed. He must be thinking of food!",z,put down map
+"Maze
+This is part of a maze of twisty little passages, all alike.
+
+",put down torch,put down map
+"Shore
+There is a magic boat here.
+
+",S,put down map
+"(with the shovel)
+The hole is getting deeper, but that's about it.
+
+",Dig sand,put down map
+"Taken.
+
+",east,put down map
+"Done.
+
+",Put emerald in case,put down map
+"Taken.
+
+",throw tan at lantern,put down map
+"Taken.
+
+",put down garlic,put down map
+"Dropped.
+
+",Inflate pile,put down map
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",put down map,put down map
+"(As you open your mouth, you drop the square soft thing.)
+
+You pull on the cloth with your teeth and back up as the door opens. Inside you can see various leftovers, some jars, some sandwich fixings and one shiny can.",get can,put down map
+"Each word of the prayer reverberates through the hall in a deafening confusion. As the last word fades, a voice, loud and commanding, speaks: ""Begone, fiends!"" A heart-stopping scream fills the cavern, and the spirits, sensing a greater power, flee through the walls.
+
+",Drop matchbook,put down map
+"Coal Mine
+
+",E,put down map
+"Mirror Room
+
+",west,put down map
+"
+Food Room
+Food room, glorious food room!
+
+Your bowl for food and water is here, but that's only the beginning. There's also a lot of secret places where your pet keeps food and things that go with food and things that make food better. There's a thing that gets hot and a box that stays cold, and that is your favorite because you know there is always food inside there. A cloth hangs down from the door of the cold box.",pull cloth,put down map
+"Taken.
+
+",put down all,put down map
+"Living Room
+
+",Read book,put down map
+"The lid opens.
+
+",put down screwdriver,put down map
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",E,put down map
+"Taken.
+
+",D,put down map
+"
+
+
+<RRROWWGRROWL> Your stomach growls.
+
+You've been vegging out in front of that flickering screen for hours, your pet by your side. Now your complaining stomach sets you up on your feet, and on a mission.
+
+Snack Time!
+An Interactive Break for a Bite
+by Hardy the Bulldog (with help from Renee Choba)
+Release 1 / Serial number 080929 / Inform 7 build 5U92 (I6/v6.31 lib 6/12N) 
+(For more information please type ABOUT)
+
+Sitting Room
+This is the room where you sit a lot. Well, you sleep here sometimes too. But there is a different room that is just for sleeping, and it is to the north. There's another room to the west. It's the room with the food. That is a good room.
+
+Even though this is the sitting room you can't sit on everything. There are a lot of ""no""s here, like the thing you can't scratch, and the tall thing and the four-legged thing that isn't alive but that stands still with the box of light on its back.
+
+Your pet is here, all stretched out on the long soft thing and snoring. ",west,put down map
+You snatch up the shiny can with your mouth and hold on tight.,close cold box,put down map
+"Taken.
+
+",Read label,put down map
+"Dropped.
+
+",D,put down map
+"Cyclops Room
+This room has an exit on the northwest, and a staircase leading up.
+A cyclops, who looks prepared to eat horses (much less mere adventurers), blocks the staircase. From his state of health, and the bloodstains on the walls, you gather that he is not very friendly, though he likes people.
+
+",Odysseus,put down map
+"Behind House
+
+",put down canary,put down map
+"Done.
+
+",Drop rusty knife,put down map
+"Done.
+
+",take skull,put down map
+"You love on your pet with some little licks.
+
+Your pet shifts and stretches, blinking. He moves around until he is mostly sitting up.
+
+""Hey Hardy,"" he mumbles.
+
+It might take a little more to get him up and moving, but at least now his eyes are open!
+
+[Your score has just gone up by ten points.]",get in all,put down map
+"Kitchen
+A bottle is sitting on the table.
+The glass bottle contains:
+  A quantity of water
+There is a brown sack here.
+The brown sack contains:
+  A lunch
+
+",put down scarab,put down map
+"(As you open your mouth, you drop the square soft thing.)
+
+You pull on the cloth with your teeth and back up as the door opens. Inside you can see various leftovers, some jars, some sandwich fixings and one shiny can.",examine box,put down map
+"Treasure Room
+There is a nasty knife here.
+There is a rusty knife here.
+There is a stiletto here.
+There is an old trunk here, bulging with assorted jewels.
+
+",take rusty knife,put down map
+"You tug and pull at the little soft things until finally one breaks free from the bunch. As you dislodge it, something clatters to the floor. Ah ha! You've found the magic wand! Those little soft things were trying to eat it!
+
+""So that's where that got away to,"" says your pet, snatching up the magic wand. He points it at the box of light and makes it even louder.",north,put down map
+"Forest Path
+This is a path winding through a dimly lit forest. The path heads north-south here. One particularly large tree with some low branches stands at the edge of the path.
+
+",south,put down map
+"The Troll Room
+
+",E,put down map
+"The candles are lit.
+The flames flicker wildly and appear to dance. The earth beneath your feet trembles, and your legs nearly buckle beneath you. The spirits cower at your unearthly power.
+The match has gone out.
+
+",look at book with bell,put down map
+"Coal Mine
+This is a non-descript part of a coal mine.
+
+",put down all,put down map
+"East of Chasm
+
+",N,put down map
+"Taken.
+
+",take all,put down map
+"Reservoir South
+
+",Sw,put down map
+"Taken.
+
+",Get nasty knife,put down map
+"You love on your pet with some little licks.
+
+Your pet shifts and stretches, blinking. He moves around until he is mostly sitting up.
+
+""Hey Hardy,"" he mumbles.
+
+It might take a little more to get him up and moving, but at least now his eyes are open!
+
+[Your score has just gone up by ten points.]",x box,put down map
