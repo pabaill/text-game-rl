@@ -45,7 +45,8 @@ class TextAdventureEnv(gym.Env):
 
     
     def get_valid_actions(self):
-        return self.game.get_valid_actions()
+        # return self.game.get_valid_actions()
+        return self.valid_actions
 
     def step(self, action: str):
         next_state, reward, done, info = self.game.step(action)
