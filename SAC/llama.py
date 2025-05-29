@@ -4,7 +4,7 @@ import torch
 class LLaMAWrapper:
     def __init__(self, model_name="meta-llama/Llama-3.2-3B-Instruct"):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name).eval()
 
     def encode_text(self, text: str):
         tokens = self.tokenizer(text, return_tensors="pt")
