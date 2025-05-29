@@ -113,8 +113,6 @@ def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_
             if moves_left <= 0 or done:
                 break
 
-
-
 def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
     wandb.config.update({
