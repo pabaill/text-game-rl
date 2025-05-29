@@ -98,7 +98,7 @@ def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_
                 with torch.no_grad():
                     a_next = a  # keep same for bootstrapping — or sample randomly
                     q_target = r + gamma * (1 - d) * target_critic(s_next, a_next)
-                    q_target = q_target.clamp(min=-10.0, max=10.0)
+                    # q_target = q_target.clamp(min=-10.0, max=10.0)
 
                 q_current = critic(s, a)
                 critic_loss = nn.MSELoss()(q_current, q_target)
@@ -179,7 +179,7 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
 
         while not done:
             prev_state_embedding = llama.encode_text(state_text).squeeze(0)
-            action_embedding = actor(prev_state_embedding)
+            action_embedding = nn.functional.normalize(actor(prev_state_embedding), p=2, dim=-1)
 
             # PREVIOUSLY: action_text = decode_action(action_embedding, env.get_valid_actions(), llama)
             action_text = decode_action(action_embedding, embedding_to_action)
@@ -230,7 +230,7 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
                 with torch.no_grad():
                     a_next = actor(s_next)
                     q_target = shaped_r + gamma * (1 - d) * target_critic(s_next, a_next)
-                    q_target = q_target.clamp(min=-10.0, max=10.0)
+                    # q_target = q_target.clamp(min=-10.0, max=10.0)
 
                 q_current = critic(s, a)
                 critic_loss = nn.MSELoss()(q_current, q_target)
@@ -249,7 +249,7 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
                     torch.nn.utils.clip_grad_norm_(reward_shaper.parameters(), max_norm=5.0)
                     optimizer_shaper.step()
 
-                a_pred = actor(s)
+                a_pred = nn.functional.normalize(actor(s), p=2, dim=-1)
                 actor_loss = -critic(s, a_pred).mean()
                 optimizer_actor.zero_grad()
                 actor_loss.backward()
