@@ -14,17 +14,19 @@ from tqdm import tqdm
 import random
 
 
-def generate_embedding_action_dict(valid_actions, llama):
+def generate_embedding_action_dict(embedding_to_action, valid_actions, llama):
     """
     From List[str] of our valid actions, embed each action and store in a dict of
     {action_embedding : action_text} such that decode action can take the action_embedding
     produced by trained actor model and return a valid action text.
+    Don't recompute actions that are already in your dictionary!
     """
-    embedding_to_action = {}
+    existing_action_texts = list(embedding_to_action.values())
     for action in tqdm(valid_actions, desc="Generation action embedding dict..."):
-        # possible optimization: append .to(torch.float{n}) where n is num bits, could save memory
-        action_embedding = llama.encode_text(action).squeeze(0).detach()
-        embedding_to_action[action_embedding] = action
+        if action not in existing_action_texts:
+            # possible optimization: append .to(torch.float{n}) where n is num bits, could save memory
+            action_embedding = llama.encode_text(action).squeeze(0).detach()
+            embedding_to_action[action_embedding] = action
     return embedding_to_action
 
 
@@ -116,7 +118,7 @@ def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_
                 break
 
 
-def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, frontload_action_compute=True, wandb_proj=None, wandb_entity=None):
+def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -140,16 +142,14 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
     reward_shaper = RewardShaper(state_dim)
     target_critic = deepcopy(critic)
 
-    # generate the dict of action_text to action_embedding
-    if frontload_action_compute:
-        valid_actions = env.get_valid_actions()
-        embedding_to_action = generate_embedding_action_dict(valid_actions, llama)
-
     replay_buffer = ReplayBuffer()
 
     optimizer_actor = torch.optim.Adam(actor.parameters(), lr=lra)
     optimizer_critic = torch.optim.Adam(critic.parameters(), lr=lrc)
     optimizer_shaper = torch.optim.Adam(reward_shaper.parameters(), lr=1e-4)
+
+    # Initialize embbeding_to_action dictionary
+    embedding_to_action = {}
 
     if pretrain_critic_enabled:
         pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_buffer)
@@ -182,9 +182,8 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
             prev_state_embedding = llama.encode_text(state_text).squeeze(0)
             action_embedding = nn.functional.normalize(actor(prev_state_embedding), p=2, dim=-1)
 
-            if not frontload_action_compute:
-                valid_actions = env.game.get_valid_actions()
-                embedding_to_action = generate_embedding_action_dict(valid_actions, llama)
+            valid_actions = env.get_valid_actions()
+            embedding_to_action = generate_embedding_action_dict(embedding_to_action, valid_actions, llama)
 
             action_text = decode_action(action_embedding, embedding_to_action)
 
@@ -313,7 +312,6 @@ if __name__ == '__main__':
     parser.add_argument('--wandb_entity', type=str, default=None, help='wandb entity name')
     parser.add_argument('--curriculum_enabled', type=bool, default=False, help='Use curriculum learning to slowly step back game start index')
     parser.add_argument('--pretrain_critic_enabled', type=bool, default=False, help='Run initial loop to gain quality expreience for critic')
-    parser.add_argument('--frontload_action_compute', type=bool, default=True, help='compute valid actions by building verb noun pairs instead of at each env step')
 
     args = parser.parse_args()
     train(
@@ -330,7 +328,6 @@ if __name__ == '__main__':
         train_only=args.train_only,
         curriculum_enabled=args.curriculum_enabled,
         pretrain_critic_enabled=args.pretrain_critic_enabled,
-        frontload_action_compute=args.frontload_action_compute,
         wandb_proj=args.wandb_proj,
         wandb_entity=args.wandb_entity
     )

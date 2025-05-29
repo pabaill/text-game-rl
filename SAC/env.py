@@ -18,14 +18,14 @@ class TextAdventureEnv(gym.Env):
         game_states = []
         env = FrotzEnv(game_path)
         # Get all possible actions
-        game_dict = env.get_dictionary()
-        noun_list = [item.word for item in game_dict if item.is_noun]
-        verb_list = [item.word for item in game_dict if item.is_verb]
-        valid_actions = []
-        for v, n in tqdm(product(verb_list, noun_list), desc="Generating verb-noun pairs", total=len(verb_list)*len(noun_list)):
-            valid_actions.append(f"{v} {n}")
-        valid_actions.extend([item.word for item in game_dict if item.is_dir])
-        self.valid_actions = valid_actions
+        # game_dict = env.get_dictionary()
+        # noun_list = [item.word for item in game_dict if item.is_noun]
+        # verb_list = [item.word for item in game_dict if item.is_verb]
+        # valid_actions = []
+        # for v, n in tqdm(product(verb_list, noun_list), desc="Generating verb-noun pairs", total=len(verb_list)*len(noun_list)):
+        #     valid_actions.append(f"{v} {n}")
+        # valid_actions.extend([item.word for item in game_dict if item.is_dir])
+        # self.valid_actions = valid_actions
         walkthrough = env.get_walkthrough()
         state_text, _ = env.reset()
         for action in walkthrough:
@@ -45,8 +45,8 @@ class TextAdventureEnv(gym.Env):
 
     
     def get_valid_actions(self):
-        # return self.game.get_valid_actions()
-        return self.valid_actions
+        return self.game.get_valid_actions()
+        # return self.valid_actions
 
     def step(self, action: str):
         next_state, reward, done, info = self.game.step(action)
