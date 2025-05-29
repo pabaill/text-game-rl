@@ -23,7 +23,7 @@ def generate_embedding_action_dict(valid_actions, llama):
     embedding_to_action = {}
     for action in valid_actions:
         # possible optimization: append .to(torch.float{n}) where n is num bits, could save memory
-        action_embedding = llama.encode_text(action).squeeze(0)
+        action_embedding = llama.encode_text(action).squeeze(0).detach()
         embedding_to_action[action_embedding] = action
     return embedding_to_action
 
@@ -57,9 +57,9 @@ def decode_action(action_embedding, embedding_to_action, is_training=True, k=5):
 #     best_action_idx = similarities.index(max(similarities))
 #     return valid_actions[best_action_idx]
 
-def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_buffer, steps=50, batch_size=32, gamma=0.9, max_ep_len=20):
+def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_buffer, steps=10, batch_size=32, gamma=0.9, max_ep_len=20):
     valid_actions = env.get_valid_actions()
-    
+
     for step in tqdm(range(steps), desc="Pretraining Critic"):
         state_text = env.reset()
         moves_left = max_ep_len
@@ -98,12 +98,14 @@ def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_
                 with torch.no_grad():
                     a_next = a  # keep same for bootstrapping — or sample randomly
                     q_target = r + gamma * (1 - d) * target_critic(s_next, a_next)
+                    q_target = q_target.clamp(min=-10.0, max=10.0)
 
                 q_current = critic(s, a)
                 critic_loss = nn.MSELoss()(q_current, q_target)
 
                 optimizer_critic.zero_grad()
                 critic_loss.backward()
+                torch.nn.utils.clip_grad_norm_(critic.parameters(), max_norm=5.0)
                 optimizer_critic.step()
 
                 # Soft update
@@ -112,6 +114,7 @@ def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_
             moves_left -= 1
             if moves_left <= 0 or done:
                 break
+
 
 def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
@@ -156,6 +159,8 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         curriculum_min_idx = 0
         curriculum_step_interval = 100
 
+    print("Begin training... 🎢 ")
+
     for episode in tqdm(range(episodes), unit="episode"):
         episode_loss_actor = 0
         episode_loss_critic = 0
@@ -172,36 +177,28 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         done = False
         moves_remaining = max_ep_len
 
-        print(f"Episode num {episode}")
-        
         while not done:
-            prev_state_text = state_text
-
-            prev_state_embedding = llama.encode_text(prev_state_text).squeeze(0)
+            prev_state_embedding = llama.encode_text(state_text).squeeze(0)
             action_embedding = actor(prev_state_embedding)
-            
+
             # PREVIOUSLY: action_text = decode_action(action_embedding, env.get_valid_actions(), llama)
             action_text = decode_action(action_embedding, embedding_to_action)
 
-            next_state_text, reward, done, info = env.step(action_text)
+            next_state_text, reward, done, _ = env.step(action_text)
             next_state_embedding = llama.encode_text(next_state_text).squeeze(0)
-
-            prev_state_text = next_state_text
 
             if learn_reward_shaping:
                 # Use net to learn reward shaping method
-                potential_diff = reward_shaper(prev_state_embedding, next_state_embedding).squeeze()
-                shaped_reward = reward + _lambda * potential_diff
+                potential_diff = reward_shaper(prev_state_embedding, next_state_embedding).squeeze().clamp(min=-0.5, max=0.5)
+                shaped_reward = reward + _lambda * potential_diff.detach()
             else:
                 # Compute state value functions
                 v_current = critic(prev_state_embedding, action_embedding).mean()
                 a_next = actor(next_state_embedding)
                 v_next = critic(next_state_embedding, a_next).mean()
-
+                
                 # Shape the reward using the critic as a potential function
-                v_current_detach = v_current.detach()
-                v_next_detach = v_next.detach()
-                shaped_reward = reward + _lambda * (gamma * v_next_detach - v_current_detach)
+                shaped_reward = reward + _lambda * (gamma * v_next.detach() - v_current.detach())
 
             # Add the shaped reward to the replay buffer
             replay_buffer.add((prev_state_embedding.detach(), action_embedding.detach(), shaped_reward.detach(), next_state_embedding.detach(), done))
@@ -221,7 +218,7 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
 
                 # Either use learned reward shaping phi OR estimate with V
                 if learn_reward_shaping:
-                    reward_delta = reward_shaper(s, s_next)
+                    reward_delta = reward_shaper(s, s_next).clamp(min=-0.5, max=0.5)
                     shaped_r = r + _lambda * reward_delta.detach()
                 else:
                     with torch.no_grad():
@@ -233,25 +230,30 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
                 with torch.no_grad():
                     a_next = actor(s_next)
                     q_target = shaped_r + gamma * (1 - d) * target_critic(s_next, a_next)
+                    q_target = q_target.clamp(min=-10.0, max=10.0)
 
                 q_current = critic(s, a)
                 critic_loss = nn.MSELoss()(q_current, q_target)
                 optimizer_critic.zero_grad()
                 critic_loss.backward()
+                torch.nn.utils.clip_grad_norm_(critic.parameters(), max_norm=5.0)
                 optimizer_critic.step()
 
                 if learn_reward_shaping:
                     # Define a target for the reward shaper (TD error)
-                    td_error = (r + gamma * (1 - d) * critic(s_next, actor(s_next)).detach() - critic(s, a).detach()).squeeze()
+                    with torch.no_grad():
+                        td_error = (r + gamma * (1 - d) * critic(s_next, actor(s_next)).detach() - critic(s, a).detach()).squeeze()
                     shaper_loss = nn.MSELoss()(reward_delta.squeeze(), td_error)
                     optimizer_shaper.zero_grad()
                     shaper_loss.backward()
+                    torch.nn.utils.clip_grad_norm_(reward_shaper.parameters(), max_norm=5.0)
                     optimizer_shaper.step()
 
                 a_pred = actor(s)
                 actor_loss = -critic(s, a_pred).mean()
                 optimizer_actor.zero_grad()
                 actor_loss.backward()
+                torch.nn.utils.clip_grad_norm_(actor.parameters(), max_norm=5.0)
                 optimizer_actor.step()
                 episode_loss_actor += actor_loss.item()
                 episode_loss_critic += critic_loss.item()
@@ -259,6 +261,8 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
                 # Soft update
                 for target_param, param in zip(target_critic.parameters(), critic.parameters()):
                     target_param.data.copy_(0.995 * target_param.data + 0.005 * param.data)
+
+            state_text = next_state_text
             moves_remaining -= 1
             if moves_remaining < 0:
                 done = True
@@ -268,11 +272,12 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
             "loss_actor": episode_loss_actor,
             "loss_critic": episode_loss_critic,
             "reward": episode_reward,
-            "raw_reward": episode_raw_reward
+            "raw_reward": episode_raw_reward,
+            "q_current": q_current.mean().item(),
+            "q_target": q_target.mean().item(),
+            "potential_diff": reward_delta.mean().item() if learn_reward_shaping else 0.0
         })
-        print(f"reward = {reward}")
 
-        # Step back learning in curriculum
         if curriculum_enabled and episode % curriculum_step_interval == 0:
             curriculum_max_idx = max(curriculum_max_idx - 1, curriculum_min_idx)
             print(f"Curriculum updated: max start index is now {curriculum_max_idx}")
@@ -285,6 +290,7 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
             wandb.save(f"actor_model_ckpt_{episode}.pth")
             wandb.save(f"critic_model_ckpt_{episode}.pth")
             wandb.save(f"reward_shaper_ckpt_{episode}.pth")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train RL agent from CSV dataset.")

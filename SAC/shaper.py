@@ -7,7 +7,9 @@ class RewardShaper(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(state_dim * 2, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1)
+            nn.Dropout(0.1),
+            nn.Linear(hidden_dim, 1),
+            nn.Tanh()  # Bound shaped reward to [-1, 1]
         )
 
     def forward(self, state, next_state):
