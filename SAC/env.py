@@ -49,6 +49,10 @@ class TextAdventureEnv(gym.Env):
 
     def step(self, action: str):
         next_state, reward, done, info = self.game.step(action)
+        state_to_rewind_to = self.game.get_state()
+        # Look around to get more environment info then rewind
+        look, _, _, _ = self.game.step('look')
+        self.game.set_state(state_to_rewind_to)
         inventory = ",".join([item.name for item in self.game.get_inventory()])
-        next_state = f"Holding: {inventory}. State: {next_state}"
+        next_state = f"Look: {look} Holding: {inventory}. State: {next_state}"
         return next_state, reward, done, info
