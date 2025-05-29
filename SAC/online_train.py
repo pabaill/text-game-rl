@@ -21,7 +21,7 @@ def generate_embedding_action_dict(valid_actions, llama):
     produced by trained actor model and return a valid action text.
     """
     embedding_to_action = {}
-    for action in valid_actions:
+    for action in tqdm(valid_actions, desc="Generation action embedding dict..."):
         # possible optimization: append .to(torch.float{n}) where n is num bits, could save memory
         action_embedding = llama.encode_text(action).squeeze(0).detach()
         embedding_to_action[action_embedding] = action
