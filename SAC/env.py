@@ -33,10 +33,14 @@ class TextAdventureEnv(gym.Env):
             state_text, _, _, _ = env.step(action)
         self.game_states = game_states
 
-    def reset(self):
-        state = random.choice(self.game_states)
-        self.game.set_state(state[1])
-        return state[0]
+    def reset(self, random_reset=True):
+        if random_reset:
+            state = random.choice(self.game_states)
+            self.game.set_state(state[1])
+            return state[0]
+        else:
+            state, _ = self.game.reset()
+            return state
     
     def reset_to_state(self, start_idx):
         state_text, state_embed = self.game_states[start_idx]

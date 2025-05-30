@@ -118,7 +118,7 @@ def pretrain_critic(env, critic, target_critic, optimizer_critic, llama, replay_
                 break
 
 
-def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, wandb_proj=None, wandb_entity=None):
+def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=32, episodes=1000, gamma=0.9, action_dim=3072, state_dim=3072, learn_reward_shaping=False, eval_interval=100, train_only=False, curriculum_enabled=False, pretrain_critic_enabled=False, random_reset=True, wandb_proj=None, wandb_entity=None):
     wandb.init(project=wandb_proj, entity=wandb_entity)
     wandb.config.update({
         "learning_rate_actor": lra,
@@ -172,7 +172,7 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         # Curriculum learning starts from later, reward rich states then steps backwards
         if curriculum_enabled:
             start_idx = random.randint(curriculum_min_idx, curriculum_max_idx)
-            state_text = env.reset_to_state(start_idx)
+            state_text = env.reset_to_state(start_idx, random_reset=random_reset)
         else:
             state_text = env.reset()
         done = False
@@ -312,6 +312,8 @@ if __name__ == '__main__':
     parser.add_argument('--wandb_entity', type=str, default=None, help='wandb entity name')
     parser.add_argument('--curriculum_enabled', type=bool, default=False, help='Use curriculum learning to slowly step back game start index')
     parser.add_argument('--pretrain_critic_enabled', type=bool, default=False, help='Run initial loop to gain quality expreience for critic')
+    parser.add_argument('--random_reset', type=bool, default=True, help='When resetting state, randomly choose from available states. If false, resets from beginning.')
+
 
     args = parser.parse_args()
     train(
@@ -328,6 +330,7 @@ if __name__ == '__main__':
         train_only=args.train_only,
         curriculum_enabled=args.curriculum_enabled,
         pretrain_critic_enabled=args.pretrain_critic_enabled,
+        random_reset=args.random_reset,
         wandb_proj=args.wandb_proj,
         wandb_entity=args.wandb_entity
     )
