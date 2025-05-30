@@ -313,11 +313,13 @@ if __name__ == '__main__':
     parser.add_argument('--curriculum_enabled', type=bool, default=False, help='Use curriculum learning to slowly step back game start index')
     parser.add_argument('--pretrain_critic_enabled', type=bool, default=False, help='Run initial loop to gain quality expreience for critic')
     parser.add_argument('--random_reset', type=bool, default=True, help='When resetting state, randomly choose from available states. If false, resets from beginning.')
+    parser.add_argument('--max_ep_len', type=int, default=50, help='Max turns agent can take each episode')
 
 
     args = parser.parse_args()
     train(
         args.game_path,
+        max_ep_len=args.max_ep_len,
         _lambda=args.lambda_,
         lra=args.lra,
         lrc=args.lrc,
