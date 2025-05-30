@@ -22,7 +22,7 @@ def generate_embedding_action_dict(embedding_to_action, valid_actions, llama):
     Don't recompute actions that are already in your dictionary!
     """
     existing_action_texts = list(embedding_to_action.values())
-    for action in tqdm(valid_actions, desc="Generation action embedding dict..."):
+    for action in valid_actions:
         if action not in existing_action_texts:
             # possible optimization: append .to(torch.float{n}) where n is num bits, could save memory
             action_embedding = llama.encode_text(action).squeeze(0).detach()
