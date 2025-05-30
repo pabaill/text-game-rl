@@ -172,9 +172,9 @@ def train(game_path, max_ep_len=50, _lambda=0.1, lra=1e-4, lrc=1e-4, batch_size=
         # Curriculum learning starts from later, reward rich states then steps backwards
         if curriculum_enabled:
             start_idx = random.randint(curriculum_min_idx, curriculum_max_idx)
-            state_text = env.reset_to_state(start_idx, random_reset=random_reset)
+            state_text = env.reset_to_state(start_idx)
         else:
-            state_text = env.reset()
+            state_text = env.reset(random_reset=random_reset)
         done = False
         moves_remaining = max_ep_len
 
