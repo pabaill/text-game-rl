@@ -8,4 +8,4 @@ python SAC/online_train.py --game_path jericho/z-machine-games-master/jericho-ga
 
 <!-- copy over checkpoints -->
 
-scp -i 224R_aws_key.pem -r ubuntu@ec2-54-191-56-70.us-west-2.compute.amazonaws.com:~/text-game-rl/checkpoints/online ./text-game-rl/checkpoints/online/reward_shaping_curriculum_enabled/
+scp -i 224R_aws_key.pem -r "ubuntu@ec2-54-191-56-70.us-west-2.compute.amazonaws.com:~/text-game-rl/checkpoints/online/nocurr*" ./text-game-rl/checkpoints/online/reward_shaping_curriculum_disabled/
