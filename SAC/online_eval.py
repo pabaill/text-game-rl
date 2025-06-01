@@ -73,9 +73,11 @@ if __name__ == '__main__':
     parser.add_argument('--game_path', type=str, required=True, help='Path to the game to learn')
     parser.add_argument('--actor_ckpt_path', type=str, required=True, help="path to actor checkpoint")
     parser.add_argument('--output_file_path', type=str, required=True, help="path to output file")
+    parser.add_argument('--max_ep_len', type=int, required=False, default=200, help="max episode length")
     args = parser.parse_args()
     eval(
         args.game_path,
         args.actor_ckpt_path,
+        max_ep_len=args.max_ep_len,
         output_file=args.output_file_path
     )

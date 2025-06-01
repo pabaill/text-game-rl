@@ -18,4 +18,4 @@ python SAC/online_train.py --game_path jericho/z-machine-games-master/jericho-ga
 
 <!-- to run eval on, for instance, from beginning potential based reward shaping -->
 
-python SAC/online_eval.py --game_path jericho/z-machine-games-master/jericho-game-suite/zork1.z5 --actor_ckpt_path checkpoints/online/from_beginning_potential_based_reward_shaping/actor_model_ckpt_100.pth --output_file_path eval_results/from_beginning_potential_based_reward_shaping/results.csv
+python SAC/online_eval.py --game_path jericho/z-machine-games-master/jericho-game-suite/zork1.z5 --actor_ckpt_path checkpoints/online/from_beginning_potential_based_reward_shaping/actor_model_ckpt_100.pth --output_file_path eval_results/from_beginning_potential_based_reward_shaping/results_zork_eplen2000.csv --max_ep_len=2000
