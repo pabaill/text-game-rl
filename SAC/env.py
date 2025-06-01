@@ -61,3 +61,6 @@ class TextAdventureEnv(gym.Env):
         inventory = ",".join([item.name for item in self.game.get_inventory()])
         next_state = f"Look: {look} Holding: {inventory}. State: {next_state}"
         return next_state, reward, done, info
+    
+    def get_dictionary(self):
+        return self.game.get_dictionary()
