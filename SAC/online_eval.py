@@ -31,7 +31,8 @@ def eval(game_path, actor_ckpt_path, state_dim=3072, action_dim=3072, max_ep_len
         valid_actions = env.get_valid_actions()
         embedding_to_action = generate_embedding_action_dict(embedding_to_action, valid_actions, llama)
         state_embedding = llama.encode_text(state_text)
-        action_embedding = actor(state_embedding)
+        # convert from [1, 3072] to [3072] shape
+        action_embedding = actor(state_embedding).squeeze(0)
         action_text = decode_action(action_embedding, embedding_to_action, is_training=False)
         next_state_text, reward, done, info = env.step(action_text)
 

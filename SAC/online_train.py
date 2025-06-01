@@ -37,10 +37,6 @@ def decode_action(action_embedding, embedding_to_action, is_training=True, k=5):
     similarities = []
     for embedding, action in embedding_to_action.items():
         # get the cosine similarity betwen predicted action embedding and all valid action embeddings
-
-        # debugging: issue with tensor shapes
-        print(f"action embedding shape: {action_embedding.shape}")
-        print(f"current embedding in embedding_to_action shape: {embedding.shape}")
         similarity = cosine_similarity(action_embedding.unsqueeze(0), embedding.unsqueeze(0)).item()
         similarities.append((similarity, action))
 
