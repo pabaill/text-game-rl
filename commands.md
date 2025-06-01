@@ -8,13 +8,14 @@ python SAC/online_train.py --game_path jericho/z-machine-games-master/jericho-ga
 
 <!-- copy over checkpoints -->
 
-scp -i 224R_aws_key.pem -r "ubuntu@ec2-54-191-56-70.us-west-2.compute.amazonaws.com:~/text-game-rl/checkpoints/online/nocurr*" ./text-game-rl/checkpoints/online/reward_shaping_curriculum_disabled/
+scp -i 224R_aws_key.pem -r "ubuntu@ec2-54-191-56-70.us-west-2.compute.amazonaws.com:~/text-game-rl/checkpoints/online/nocurr\*" ./text-game-rl/checkpoints/online/reward_shaping_curriculum_disabled/
 
 scp -i 224R_aws_key.pem -r ubuntu@ec2-35-95-65-119.us-west-2.compute.amazonaws.com:~/text-game-rl/checkpoints/online/from_beginning_potential_based_reward_shaping ./text-game-rl/checkpoints/online/from_beginning_potential_based_reward_shaping
 
-
 <!-- learn from beginning with potential based reward shaping -->
+
 python SAC/online_train.py --game_path jericho/z-machine-games-master/jericho-game-suite/zork1.z5 --wandb_proj 224r --wandb_entity cadicamo --random_reset False --max_ep_len 100 --episodes 101
 
 <!-- to run eval on, for instance, from beginning potential based reward shaping -->
-python SAC/online_eval.py --game_path jericho/z-machine-games-master/jericho-game-suite/zork1.z5 --actor_ckpt_path checkpoints/online/from_beginning_potential_based_reward_shaping/actor_model_ckpt_100.pth --output_file_path eval_results/from_beginning_potential_based_reward_shaping/
+
+python SAC/online_eval.py --game_path jericho/z-machine-games-master/jericho-game-suite/zork1.z5 --actor_ckpt_path checkpoints/online/from_beginning_potential_based_reward_shaping/actor_model_ckpt_100.pth --output_file_path eval_results/from_beginning_potential_based_reward_shaping/results.csv
