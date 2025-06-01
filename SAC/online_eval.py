@@ -23,9 +23,13 @@ def eval(game_path, actor_ckpt_path, state_dim=3072, action_dim=3072, max_ep_len
     results = []
     done = False
     ep_rem = max_ep_len
+
+    # maintain embedding_to_action dict to build up over time
+    embedding_to_action = {}
+
     while not done and ep_rem > 0:
         valid_actions = env.get_valid_actions()
-        embedding_to_action = generate_embedding_action_dict(valid_actions, llama)
+        embedding_to_action = generate_embedding_action_dict(embedding_to_action, valid_actions, llama)
         state_embedding = llama.encode_text(state_text)
         action_embedding = actor(state_embedding)
         action_text = decode_action(action_embedding, embedding_to_action, is_training=False)
@@ -66,8 +70,8 @@ def eval(game_path, actor_ckpt_path, state_dim=3072, action_dim=3072, max_ep_len
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train RL agent from CSV dataset.")
     parser.add_argument('--game_path', type=str, required=True, help='Path to the game to learn')
-    parser.add_argument('--actor_ckpt_path', type-str, required=True, help="path to actor checkpoint")
-    parser.add_argument('--output_file_path', type-str, required=True, help="path to output file")
+    parser.add_argument('--actor_ckpt_path', type=str, required=True, help="path to actor checkpoint")
+    parser.add_argument('--output_file_path', type=str, required=True, help="path to output file")
     args = parser.parse_args()
     eval(
         args.game_path,
