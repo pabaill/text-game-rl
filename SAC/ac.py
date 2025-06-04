@@ -1,3 +1,7 @@
+"""
+Actor and Critic networks for Soft Actor Critic. 
+"""
+
 import torch
 from torch import nn
 
@@ -23,6 +27,5 @@ class Critic(nn.Module):
         )
 
     def forward(self, state_embedding, action_embedding):
-        
         x = torch.cat([state_embedding, action_embedding], dim=-1)
         return self.net(x)

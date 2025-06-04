@@ -1,3 +1,7 @@
+"""
+A simple replay buffer for storing and sampling transitions.
+"""
+
 import random
 
 class ReplayBuffer:

@@ -1,3 +1,8 @@
+"""
+Script for merging all CSV files in a directory into a single CSV file.
+NOTE: this script is not used in the final implementation, which uses online training.
+"""
+
 import pandas as pd
 import glob
 import os

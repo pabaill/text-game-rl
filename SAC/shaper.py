@@ -1,3 +1,7 @@
+"""
+Network for learned reward shaping.
+"""
+
 import torch
 from torch import nn
 

@@ -1,3 +1,8 @@
+"""
+Evaluation script for OFFLINE trained actor model.
+Note: not used in final implementation, which uses online evaluation.
+"""
+
 import pandas as pd
 import torch
 from torch import nn
@@ -31,6 +36,8 @@ def evaluate_model(actor, llama, test_data, batch_size=BATCH_SIZE, output_file="
 
         # Get actor output before and after normalization
         raw_output = actor(prev_state_embedding)
+
+        # NOTE: if we want to normalize the output, uncomment below.
         # predicted_action_embedding = nn.functional.normalize(raw_output, p=2, dim=-1)
         predicted_action_embedding = raw_output
 
@@ -41,6 +48,8 @@ def evaluate_model(actor, llama, test_data, batch_size=BATCH_SIZE, output_file="
         print(f"[Sample {idx}] Expected action embedding (first 5 dims): {expected_action_embedding[:5]}")
         print(f"[Sample {idx}] Vector norms - Predicted: {predicted_action_embedding.norm():.4f}, Expected: {expected_action_embedding.norm():.4f}")
 
+        
+        # NOTE: if we want to compare via cosine similarity or euclidian distance, uncomment below.
         # Compare to all action candidates
         # similarities = cosine_similarity(predicted_action_embedding.unsqueeze(0), action_embeddings)
         # closest_idx = similarities.argmax()
@@ -56,6 +65,7 @@ def evaluate_model(actor, llama, test_data, batch_size=BATCH_SIZE, output_file="
         # predicted_action_text = action_texts[closest_idx]
         # similarity = euclidian_dist[closest_idx].item()
 
+        # For now, use dot product to get similarity
         similarity = torch.matmul(action_embeddings, predicted_action_embedding)
         predicted_action_text = action_texts[similarity.argmax()]
 

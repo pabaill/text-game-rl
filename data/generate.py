@@ -1,3 +1,8 @@
+"""
+Script for generating training data for the offline SAC model.
+NOTE: this script is not used in the final implementation, which uses online training.
+"""
+
 from jericho import *
 from tqdm import tqdm
 import csv

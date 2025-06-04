@@ -1,8 +1,12 @@
+"""
+A custom OpenAI Gym environment for text adventure games using the Jericho library.
+Provides an interface for interacting with text adventure games like Zork,
+with support for state management, action validation, and walkthrough-based exploration.
+"""
+
 import gym
 from jericho import *
 import random
-from tqdm import tqdm
-from itertools import product
 
 
 class TextAdventureEnv(gym.Env):
@@ -14,18 +18,12 @@ class TextAdventureEnv(gym.Env):
     """
     def __init__(self, game_path):
         self.game = FrotzEnv(game_path)
-        # Tuples of (state_text, state_embedding)
+
+        # tuples of (state_text, state_embedding)
         game_states = []
         env = FrotzEnv(game_path)
-        # Get all possible actions
-        # game_dict = env.get_dictionary()
-        # noun_list = [item.word for item in game_dict if item.is_noun]
-        # verb_list = [item.word for item in game_dict if item.is_verb]
-        # valid_actions = []
-        # for v, n in tqdm(product(verb_list, noun_list), desc="Generating verb-noun pairs", total=len(verb_list)*len(noun_list)):
-        #     valid_actions.append(f"{v} {n}")
-        # valid_actions.extend([item.word for item in game_dict if item.is_dir])
-        # self.valid_actions = valid_actions
+     
+        # build a lit of game states from walkthrough
         walkthrough = env.get_walkthrough()
         state_text, _ = env.reset()
         for action in walkthrough:
@@ -34,27 +32,30 @@ class TextAdventureEnv(gym.Env):
         self.game_states = game_states
 
     def reset(self, random_reset=True):
+        # reset to a random state
         if random_reset:
             state = random.choice(self.game_states)
             self.game.set_state(state[1])
             return state[0]
+        
+        # reset to the first state
         else:
             state, _ = self.game.reset()
             return state
     
     def reset_to_state(self, start_idx):
+        # reset to a specific state
         state_text, state_embed = self.game_states[start_idx]
         self.game.set_state(state_embed)
         return state_text
 
-    
     def get_valid_actions(self):
         return self.game.get_valid_actions()
-        # return self.valid_actions
 
     def step(self, action: str):
         next_state, reward, done, info = self.game.step(action)
         state_to_rewind_to = self.game.get_state()
+
         # Look around to get more environment info then rewind
         look, _, _, _ = self.game.step('look')
         self.game.set_state(state_to_rewind_to)
