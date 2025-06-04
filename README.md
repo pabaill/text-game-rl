@@ -13,3 +13,9 @@ Course project for CS 224R. Learning how to finetune LLMs to recognize relations
 7. Get games on your phone (wget https://github.com/BYU-PCCL/z-machine-games/archive/master.zip)
 8. Unzip the games (unzip master.zip)
 9. Read the quickstart guide [here](https://jericho-py.readthedocs.io/en/latest/tutorial_quick.html)
+
+## Soft Actor Critc
+
+We use online training in Jericho games for a Soft Actor Critic network.
+SAC is an off-policy algorithm that uses entropy regularization. It is designed to maximize the tradeoff between expected return and entropy, meaning that it encourages both more exploration with increased entropy and high exploitation with expected return.
+For more information, read OpenAI's docs: https://spinningup.openai.com/en/latest/algorithms/sac.html (their module not used, but provides good information)
